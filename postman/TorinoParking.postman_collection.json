@@ -1,0 +1,317 @@
+{
+  "info": {
+    "name": "Torino Parking API",
+    "description": "Real-time parking availability API for Torino, Italy.\n\nData sourced from 5T Open Data (updated every 2 minutes).\n\nSet the `base_url` variable to point to your running instance.\nSet `api_key` for authenticated requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check the health status of the API and its dependencies (Redis, 5T API).\n\nReturns HTTP 200 if healthy, HTTP 503 if degraded."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has healthy status', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('healthy');",
+                  "});",
+                  "",
+                  "pm.test('Redis is up', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.services.redis).to.eql('up');",
+                  "});",
+                  "",
+                  "pm.test('Has security headers', function () {",
+                  "    pm.response.to.have.header('X-Content-Type-Options');",
+                  "    pm.response.to.have.header('X-Frame-Options');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "OpenAPI Spec",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/openapi.json",
+              "host": ["{{base_url}}"],
+              "path": ["openapi.json"]
+            },
+            "description": "Get the OpenAPI specification (only available in debug mode)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Parkings",
+      "item": [
+        {
+          "name": "Get All Parkings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parkings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parkings"]
+            },
+            "description": "Get real-time parking availability for all parking lots in Torino.\n\nData is cached for 120 seconds. Returns total count, last update time, and a list of parkings with availability info."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has parkings array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.parkings).to.be.an('array');",
+                  "    pm.expect(jsonData.total).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('Each parking has required fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var parking = jsonData.parkings[0];",
+                  "    pm.expect(parking).to.have.property('id');",
+                  "    pm.expect(parking).to.have.property('name');",
+                  "    pm.expect(parking).to.have.property('status');",
+                  "    pm.expect(parking).to.have.property('total_spots');",
+                  "    pm.expect(parking).to.have.property('lat');",
+                  "    pm.expect(parking).to.have.property('lng');",
+                  "    pm.expect(parking).to.have.property('is_available');",
+                  "});",
+                  "",
+                  "pm.test('Has source and last_update metadata', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.source).to.eql('5T Torino Open Data');",
+                  "    pm.expect(jsonData.last_update).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Parkings (Authenticated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parkings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parkings"]
+            },
+            "description": "Get parkings with API key authentication.\n\nSet the `api_key` collection variable to your Doppler API_KEY value."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Parkings (Invalid Key)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "invalid-key-12345",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parkings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parkings"]
+            },
+            "description": "Test that an invalid API key returns 403 Forbidden."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('Returns error detail', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.eql('Invalid API key');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Single Parking (BODONI)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parkings/2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parkings", "2"]
+            },
+            "description": "Get details for parking BODONI (ID: 2)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns BODONI parking', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.eql(2);",
+                  "    pm.expect(jsonData.name).to.eql('BODONI');",
+                  "});",
+                  "",
+                  "pm.test('Has coordinates', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.lat).to.be.a('number');",
+                  "    pm.expect(jsonData.lng).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Single Parking (LINGOTTO)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parkings/7",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parkings", "7"]
+            },
+            "description": "Get details for parking LINGOTTO (ID: 7) - the largest parking in Torino."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns LINGOTTO parking', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.name).to.eql('LINGOTTO');",
+                  "    pm.expect(jsonData.total_spots).to.be.above(2000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Parking Not Found",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parkings/99999",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parkings", "99999"]
+            },
+            "description": "Test 404 response for a non-existent parking ID."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Returns not found error', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.include('not found');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

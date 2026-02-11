@@ -1,0 +1,105 @@
+# Shared environment for backend service
+x-backend-env: &backend-env
+  DATABASE_URL: ${DATABASE_URL}
+  REDIS_URL: ${REDIS_URL}
+  ADMIN_API_KEY: ${ADMIN_API_KEY}
+  ENVIRONMENT: ${ENVIRONMENT}
+  DEBUG: ${DEBUG}
+  FIVE_T_API_URL: ${FIVE_T_API_URL}
+  FIVE_T_TIMEOUT: ${FIVE_T_TIMEOUT}
+  CACHE_TTL: ${CACHE_TTL}
+  RATE_LIMIT_ANONYMOUS: ${RATE_LIMIT_ANONYMOUS}
+  RATE_LIMIT_AUTHENTICATED: ${RATE_LIMIT_AUTHENTICATED}
+  RATE_LIMIT_PREMIUM: ${RATE_LIMIT_PREMIUM}
+  CORS_ORIGINS: ${CORS_ORIGINS}
+  SENTRY_DSN: ${SENTRY_DSN}
+  LOG_LEVEL: ${LOG_LEVEL}
+  SNAPSHOT_RETENTION_DAYS: ${SNAPSHOT_RETENTION_DAYS:-30}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${POSTGRES_DB}
+
+services:
+  # PostgreSQL Database with PostGIS
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: parking_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - parking-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: parking_redis
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - parking-network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: parking_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *backend-env
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+      - ./alembic:/app/alembic
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - parking-network
+    restart: unless-stopped
+
+  # Dockhand - Docker Management UI
+  dockhand:
+    image: fnsys/dockhand:latest
+    container_name: parking_dockhand
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dockhand_data:/app/data
+    restart: unless-stopped
+    networks:
+      - parking-network
+
+networks:
+  parking-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  dockhand_data:
