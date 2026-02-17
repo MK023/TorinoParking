@@ -1,132 +1,109 @@
-# 🅿️ Torino Parking - Real-Time Parking Availability API
+# Torino Parking - Real-Time Parking Availability API
 
-Backend API per visualizzare disponibilità parcheggi in tempo reale a Torino.
+Backend API che aggrega dati real-time dall'API Open Data 5T del Comune di Torino per fornire disponibilita parcheggi tramite API REST.
 
-## 📋 Panoramica Progetto
+## Stack Tecnologico
 
-Applicazione che aggrega dati real-time dall'API Open Data 5T del Comune di Torino per fornire informazioni su disponibilità parcheggi tramite API REST performante e sicura.
+- **FastAPI** (Python 3.12) - API async
+- **PostgreSQL 16 + PostGIS** - storage + query geo-spaziali
+- **Redis 7** - cache con compressione e ETag
+- **APScheduler** - job periodici in-process (fetch dati, cleanup, purge)
+- **Docker + Docker Compose** - orchestrazione locale
+- **GitHub Actions** - CI (lint, test, Docker build)
+- **Sentry** - error tracking (opzionale)
+- **structlog** - logging strutturato JSON
 
-### Obiettivi
-- ✅ Fornire API REST per app mobile (iOS/Android)
-- ✅ Cache intelligente per performance
-- ✅ Storico dati per analytics e predizioni
-- ✅ Architettura scalabile e production-ready
-- ✅ GDPR compliant
-- ✅ Security-first approach
+## Funzionalita Implementate
 
-### Stack Tecnologico
+### API Endpoints
 
-**Backend:**
-- FastAPI (Python 3.12)
-- PostgreSQL 16 + PostGIS (geo-spatial queries)
-- Redis 7 (caching + Celery broker)
-- Celery (background tasks)
-- Docker + Docker Compose
+| Metodo | Endpoint | Descrizione |
+|--------|----------|-------------|
+| `GET` | `/api/v1/parkings` | Lista parcheggi con disponibilita real-time. Filtri: `?available=true`, `?min_spots=N` |
+| `GET` | `/api/v1/parkings/nearby` | Ricerca geo-spaziale PostGIS. Params: `lat`, `lng`, `radius` (metri), `limit` |
+| `GET` | `/api/v1/parkings/{id}` | Singolo parcheggio per ID |
+| `GET` | `/api/v1/parkings/{id}/history` | Storico disponibilita. Param: `?hours=24` (max 720) |
+| `GET` | `/health` | Health check (Redis + PostgreSQL) |
+| `POST` | `/api/v1/admin/keys` | Crea API key (richiede `X-Admin-Key`) |
+| `GET` | `/api/v1/admin/keys` | Lista API keys |
+| `DELETE` | `/api/v1/admin/keys/{id}` | Revoca API key |
 
-**Monitoring & Observability:**
-- Sentry (error tracking)
-- Prometheus + Grafana (metrics)
-- Structured logging
+### Core Features
 
-**Deployment:**
-- Docker containerizzato
-- Dockhand (Docker management UI)
-- CI/CD con GitHub Actions
-- Fly.io (hosting)
+- **Cache Redis** con TTL 120s, compressione orjson + zlib, ETag per conditional requests (304)
+- **Dati arricchiti**: merge automatico dati real-time 5T + dettagli statici GTT (22 parcheggi con indirizzo, tariffe, metodi pagamento, linee bus, metro)
+- **API key management**: HMAC-SHA256, tiers anonymous/authenticated/premium, cache in-memory 60s
+- **Rate limiting**: sliding window multi-tier (20/100/1000 req/min) con Redis sorted sets
+- **Background jobs**: fetch 5T ogni 2 min, cleanup cache ogni ora, purge snapshot ogni notte
+- **Snapshot storici**: tabella time-series con retention 30 giorni
 
-## 🗂️ Struttura Documentazione
+### Architettura
 
-Tutta la documentazione dettagliata è nella cartella `/docs`:
+Clean Architecture con separazione domain/infrastructure/API:
+- Domain layer: entita frozen dataclass, Protocol per contracts
+- Infrastructure: repository PostgreSQL, client HTTP 5T, cache Redis
+- API: FastAPI routes, middleware stack (security headers, rate limiting, access log, request ID)
 
-### Core Documentation
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Architettura completa del sistema
-- **[SECURITY.md](docs/SECURITY.md)** - Threat model, autenticazione, security best practices
-- **[GDPR.md](docs/GDPR.md)** - Compliance GDPR, privacy policy, data protection
-- **[API_DESIGN.md](docs/API_DESIGN.md)** - Design API RESTful, endpoints, patterns
-- **[DATABASE.md](docs/DATABASE.md)** - Schema database, migrations, queries geografiche
-
-### Development & Operations
-- **[SETUP.md](docs/SETUP.md)** - Setup locale, installazione, quick start
-- **[BEST_PRACTICES.md](docs/BEST_PRACTICES.md)** - Code quality, testing, performance
-- **[CELERY.md](docs/CELERY.md)** - Background tasks, scheduled jobs, workers
-- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Deploy con Dockhand, CI/CD, monitoring
-
-### Reference
-- **[TECH_DECISIONS.md](docs/TECH_DECISIONS.md)** - ADR (Architecture Decision Records)
-- **[ALGORITHMS.md](docs/ALGORITHMS.md)** - Algoritmi geo-spatial, predictions
-- **[TOOLS.md](docs/TOOLS.md)** - Setup Claude Code, VS Code extensions, CLI tools
-
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/yourusername/torino-parking.git
-cd torino-parking
+# 1. Clone
+git clone https://github.com/marcobellingeri/TorinoParking.git
+cd TorinoParking
 
-# 2. Copy environment variables
+# 2. Configura environment
 cp .env.example .env
-# Edit .env con i tuoi secrets
 
-# 3. Start con Docker Compose
+# 3. Avvia con Docker Compose
 docker-compose up -d
 
-# 4. Verifica che tutto funzioni
+# 4. Verifica
 curl http://localhost:8000/health
 ```
 
-L'API sarà disponibile su `http://localhost:8000`
+L'API sara disponibile su `http://localhost:8000`
 
-Documentazione interattiva (Swagger): `http://localhost:8000/docs`
+Swagger UI: `http://localhost:8000/docs` (solo in development)
 
-## 📊 Features Pianificate
+## Test
 
-### MVP (Fase 1) - In sviluppo
-- [x] Architettura definita
-- [x] Documentazione completa
-- [ ] API 5T client
-- [ ] Endpoint `/parkings` con cache Redis
-- [ ] Health checks
-- [ ] Docker setup completo
+```bash
+# Unit tests (no Docker richiesto)
+python -m pytest tests/unit/ -v
 
-### v1.0 (Fase 2)
-- [ ] Geo-spatial search (parcheggi entro N km)
-- [ ] Celery background tasks
-- [ ] Storico disponibilità (PostgreSQL)
-- [ ] Rate limiting multi-tier
-- [ ] GDPR endpoints completi
+# Integration + E2E (richiede Docker per testcontainers)
+python -m pytest tests/ -v
+```
 
-### v2.0 (Fase 3)
-- [ ] Predizioni ML (availability forecast)
-- [ ] Push notifications
-- [ ] Admin dashboard
-- [ ] Multi-città support
+## Documentazione
 
-## 🔐 Security & Compliance
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Architettura del sistema
+- **[docs/SECURITY.md](docs/SECURITY.md)** - Threat model e security practices
+- **[docs/GDPR.md](docs/GDPR.md)** - Compliance GDPR e privacy
+- **[docs/SETUP.md](docs/SETUP.md)** - Setup locale e troubleshooting
+- **[ROADMAP.md](ROADMAP.md)** - Miglioramenti futuri
 
-- ✅ GDPR compliant by design
-- ✅ Data minimization (NO targhe, NO PII non necessari)
-- ✅ Encryption at rest e in transit
-- ✅ Rate limiting per abuse prevention
-- ✅ Security headers (HSTS, CSP, etc.)
-- ✅ Vulnerability scanning (Trivy)
-- ✅ Audit logging
+## Security
 
-Vedi [SECURITY.md](docs/SECURITY.md) per dettagli completi.
+- API key con hash HMAC-SHA256 (salt configurabile via env var)
+- Rate limiting per IP (anonymous) e per API key (authenticated)
+- Security headers: X-Content-Type-Options, X-Frame-Options, Cache-Control
+- CORS configurabile per environment
+- Secrets in environment variables
+- Input validation con Pydantic
 
-## 📝 License
+## CI/CD
 
-MIT License - vedi [LICENSE](LICENSE) file.
+GitHub Actions pipeline: **ruff lint** -> **pytest con coverage** -> **Docker build**
 
-## 👥 Contributing
+## Roadmap
 
-Per ora progetto personale. Contributioni benvenute in futuro!
+Vedi [ROADMAP.md](ROADMAP.md) per i miglioramenti pianificati: HTTPS/TLS, circuit breaker, Prometheus metrics, user authentication JWT, push notifications.
 
-## 📞 Contatti
+## License
 
-Marco Bellingeri
-- GitHub: [@marcobellingeri](https://github.com/marcobellingeri)
-- Email: [your-email]
+MIT
 
----
+## Contatti
 
-**Nota per Claude Code:** Tutta la documentazione necessaria per sviluppare il progetto è nella cartella `/docs`. Leggi i file in ordine per avere contesto completo su architettura, security e best practices da seguire.
+Marco Bellingeri - [@marcobellingeri](https://github.com/marcobellingeri)
