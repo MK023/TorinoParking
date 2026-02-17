@@ -47,6 +47,8 @@ async def _get_parkings_data(
 
 @router.get("", response_model=ParkingListResponse)
 async def get_parkings(
+    available: bool | None = Query(None, description="Filter by availability"),
+    min_spots: int | None = Query(None, ge=0, description="Minimum free spots"),
     api_key: str | None = Security(verify_api_key),
     cache: CacheService = Depends(get_cache_service),
     repository: ParkingRepository = Depends(get_parking_repository),
@@ -55,6 +57,7 @@ async def get_parkings(
     """Get real-time parking availability in Torino.
 
     Supports ETag conditional requests via the If-None-Match header.
+    Optionally filter by availability and minimum free spots.
     """
     if if_none_match:
         current_etag = await cache.get_etag(PARKINGS_CACHE_KEY)
@@ -62,8 +65,24 @@ async def get_parkings(
             return Response(status_code=304, headers={"ETag": f'"{current_etag}"'})
 
     data, etag = await _get_parkings_data(cache, repository)
+
+    filtered = data.parkings
+    if available is not None:
+        filtered = [p for p in filtered if p.is_available == available]
+    if min_spots is not None:
+        filtered = [
+            p for p in filtered
+            if p.free_spots is not None and p.free_spots >= min_spots
+        ]
+
+    result = ParkingListResponse(
+        total=len(filtered),
+        last_update=data.last_update,
+        source=data.source,
+        parkings=filtered,
+    )
     headers = {"ETag": f'"{etag}"'} if etag else {}
-    return JSONResponse(content=data.model_dump(mode="json"), headers=headers)
+    return JSONResponse(content=result.model_dump(mode="json"), headers=headers)
 
 
 @router.get("/nearby", response_model=ParkingListResponse)
