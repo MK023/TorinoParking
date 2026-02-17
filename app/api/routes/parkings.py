@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_cache_service, get_db_session, get_parking_repository, verify_api_key
-from app.api.schemas import ParkingHistoryResponse, ParkingListResponse, ParkingSchema, SnapshotSchema
+from app.api.schemas import ParkingDetailSchema, ParkingHistoryResponse, ParkingListResponse, ParkingSchema, SnapshotSchema
 from app.domain.exceptions import ParkingNotFoundError
 from app.domain.interfaces import CacheService, ParkingRepository
 from app.infrastructure.db_repository import ParkingDBRepository
@@ -64,6 +64,49 @@ async def get_parkings(
     data, etag = await _get_parkings_data(cache, repository)
     headers = {"ETag": f'"{etag}"'} if etag else {}
     return JSONResponse(content=data.model_dump(mode="json"), headers=headers)
+
+
+@router.get("/nearby", response_model=ParkingListResponse)
+async def get_nearby_parkings(
+    lat: float = Query(..., ge=-90, le=90),
+    lng: float = Query(..., ge=-180, le=180),
+    radius: int = Query(1000, ge=100, le=5000, description="Radius in meters"),
+    limit: int = Query(10, ge=1, le=50),
+    api_key: str | None = Security(verify_api_key),
+    db: AsyncSession = Depends(get_db_session),
+) -> ParkingListResponse:
+    """Find parkings within radius (meters) of a point. Uses PostGIS."""
+    repo = ParkingDBRepository(db)
+    entities = await repo.find_nearby(lat, lng, radius, limit)
+    parkings = []
+    for e in entities:
+        detail_dict = (
+            ParkingDetailSchema.model_validate(e.detail).model_dump()
+            if e.detail
+            else None
+        )
+        parkings.append(
+            ParkingSchema(
+                id=e.id,
+                name=e.name,
+                status=0,
+                total_spots=e.total_spots,
+                free_spots=None,
+                tendence=None,
+                lat=e.lat,
+                lng=e.lng,
+                status_label="nessun dato",
+                is_available=False,
+                occupancy_percentage=None,
+                detail=ParkingDetailSchema(**detail_dict) if detail_dict else None,
+            )
+        )
+    return ParkingListResponse(
+        total=len(parkings),
+        last_update=datetime.now(timezone.utc),
+        source="PostGIS spatial query",
+        parkings=parkings,
+    )
 
 
 @router.get("/{parking_id}", response_model=ParkingSchema)
