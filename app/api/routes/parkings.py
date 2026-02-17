@@ -93,37 +93,66 @@ async def get_nearby_parkings(
     limit: int = Query(10, ge=1, le=50),
     api_key: str | None = Security(verify_api_key),
     db: AsyncSession = Depends(get_db_session),
+    cache: CacheService = Depends(get_cache_service),
+    repository: ParkingRepository = Depends(get_parking_repository),
 ) -> ParkingListResponse:
-    """Find parkings within radius (meters) of a point. Uses PostGIS."""
+    """Find parkings within radius (meters) of a point.
+
+    Uses PostGIS for spatial filtering, then merges real-time availability
+    data from the 5T cache so results include live free_spots and status.
+    """
     repo = ParkingDBRepository(db)
     entities = await repo.find_nearby(lat, lng, radius, limit)
+
+    # Build a lookup of real-time data from cache
+    live_data: dict[int, ParkingSchema] = {}
+    try:
+        data, _ = await _get_parkings_data(cache, repository)
+        live_data = {p.id: p for p in data.parkings}
+    except Exception:
+        logger.warning("nearby_cache_miss", msg="Could not load live data for merge")
+
     parkings = []
     for e in entities:
-        detail_dict = (
-            ParkingDetailSchema.model_validate(e.detail).model_dump()
-            if e.detail
-            else None
-        )
-        parkings.append(
-            ParkingSchema(
-                id=e.id,
-                name=e.name,
-                status=0,
-                total_spots=e.total_spots,
-                free_spots=None,
-                tendence=None,
-                lat=e.lat,
-                lng=e.lng,
-                status_label="nessun dato",
-                is_available=False,
-                occupancy_percentage=None,
-                detail=ParkingDetailSchema(**detail_dict) if detail_dict else None,
+        live = live_data.get(e.id)
+        if live:
+            # Use live data enriched with detail from DB join
+            detail_dict = (
+                ParkingDetailSchema.model_validate(e.detail).model_dump()
+                if e.detail
+                else None
             )
-        )
+            parkings.append(
+                live.model_copy(
+                    update={"detail": ParkingDetailSchema(**detail_dict) if detail_dict else live.detail}
+                )
+            )
+        else:
+            detail_dict = (
+                ParkingDetailSchema.model_validate(e.detail).model_dump()
+                if e.detail
+                else None
+            )
+            parkings.append(
+                ParkingSchema(
+                    id=e.id,
+                    name=e.name,
+                    status=0,
+                    total_spots=e.total_spots,
+                    free_spots=None,
+                    tendence=None,
+                    lat=e.lat,
+                    lng=e.lng,
+                    status_label="nessun dato",
+                    is_available=False,
+                    occupancy_percentage=None,
+                    detail=ParkingDetailSchema(**detail_dict) if detail_dict else None,
+                )
+            )
     return ParkingListResponse(
         total=len(parkings),
         last_update=datetime.now(timezone.utc),
-        source="PostGIS spatial query",
+        source="PostGIS spatial query + 5T real-time",
         parkings=parkings,
     )
 

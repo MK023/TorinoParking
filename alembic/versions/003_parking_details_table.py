@@ -260,6 +260,24 @@ def upgrade() -> None:
         ),
     )
 
+    # Insert stub parking records so FK constraints pass.
+    # The scheduler will upsert real data (name, coordinates) on first fetch.
+    parkings_table = sa.table(
+        "parkings",
+        sa.column("id", sa.Integer),
+        sa.column("name", sa.String),
+        sa.column("total_spots", sa.Integer),
+        sa.column("lat", sa.Float),
+        sa.column("lng", sa.Float),
+    )
+    for row in SEED_DATA:
+        op.execute(
+            sa.text(
+                "INSERT INTO parkings (id, name, total_spots, lat, lng) "
+                "VALUES (:id, :name, 0, 0.0, 0.0) ON CONFLICT (id) DO NOTHING"
+            ).bindparams(id=row["parking_id"], name=f"Parking {row['parking_id']}")
+        )
+
     # Seed the GTT data
     details_table = sa.table(
         "parking_details",
