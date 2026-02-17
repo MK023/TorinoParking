@@ -69,6 +69,7 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [ ] Aggiornamento dati smart: refresh solo se app in foreground (Page Visibility API)
 - [ ] Intervallo refresh adattivo: 2 min in consultazione, 30s dopo tap su "Vicino a me"
 - [x] Parcheggi chiusi/fuori servizio: nascondere tendenza ("si libera" / "si riempie") — non ha senso su parcheggio non operativo
+- [ ] Differenziare colore marker per stato: chiuso = grigio (stato normale, fuori orario), fuori servizio = rosso (anomalia, guasto) — oggi entrambi sono grigi
 
 ---
 
