@@ -5,7 +5,7 @@ for historical and spatial queries. All queries use parameterized
 SQLAlchemy statements to prevent injection.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import insert, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -74,6 +74,22 @@ class ParkingDBRepository:
         )
         result = await self._session.execute(stmt)
         return list(result.unique().scalars().all())
+
+    async def get_history(
+        self, parking_id: int, hours: int = 24
+    ) -> list[ParkingSnapshot]:
+        """Return snapshots for a parking within the last N hours."""
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        stmt = (
+            select(ParkingSnapshot)
+            .where(
+                ParkingSnapshot.parking_id == parking_id,
+                ParkingSnapshot.recorded_at >= cutoff,
+            )
+            .order_by(ParkingSnapshot.recorded_at.desc())
+        )
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
 
     async def get_all_details(self) -> dict[int, ParkingDetailEntity]:
         """Load all detail rows in a single query, keyed by parking_id."""

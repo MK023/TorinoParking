@@ -84,18 +84,42 @@ def _create_tables():
     """Create all tables once per session (faster than running Alembic)."""
     import asyncio
 
-    from app.infrastructure.database import engine
+    import sqlalchemy
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    from app.config import get_settings
     from app.infrastructure.db_models import Base
 
+    test_settings = get_settings()
+    test_engine = create_async_engine(test_settings.database_url, poolclass=NullPool)
+
+    # Patch the engine and session_factory so the rest of the app uses them
+    import app.infrastructure.database as db_mod
+
+    db_mod.engine = test_engine
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+    db_mod.async_session_factory = async_sessionmaker(
+        test_engine, class_=AsyncSession, expire_on_commit=False
+    )
+
     async def _setup():
-        async with engine.begin() as conn:
-            # PostGIS extension may not exist in test container without migration
+        async with test_engine.begin() as conn:
             await conn.execute(
-                __import__("sqlalchemy").text(
-                    "CREATE EXTENSION IF NOT EXISTS postgis"
-                )
+                sqlalchemy.text("DROP SCHEMA public CASCADE")
+            )
+            await conn.execute(
+                sqlalchemy.text("CREATE SCHEMA public")
+            )
+            await conn.execute(
+                sqlalchemy.text("CREATE EXTENSION IF NOT EXISTS postgis")
             )
             await conn.run_sync(Base.metadata.create_all)
+        # Dispose the pool so connections tied to this event loop are not
+        # reused in the test event loops (avoids "Future attached to a
+        # different loop" errors).
+        await test_engine.dispose()
 
     asyncio.get_event_loop_policy().new_event_loop().run_until_complete(_setup())
     yield
@@ -104,7 +128,10 @@ def _create_tables():
 @pytest_asyncio.fixture
 async def client(_create_tables):
     """ASGI test client with scheduler mocked out."""
+    import httpx
     from httpx import ASGITransport, AsyncClient
+
+    from app.infrastructure.redis_cache import create_redis_pool
 
     with (
         patch("app.main.configure_scheduler"),
@@ -117,11 +144,21 @@ async def client(_create_tables):
 
         app = create_app()
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            yield ac
+        # ASGITransport does not trigger ASGI lifespan events, so we
+        # must manually initialise the shared resources that middleware
+        # and dependency providers expect on ``app.state``.
+        app.state.redis_pool = create_redis_pool()
+        app.state.http_client = httpx.AsyncClient()
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://testserver",
+            ) as ac:
+                yield ac
+        finally:
+            await app.state.http_client.aclose()
+            await app.state.redis_pool.close()
 
 
 @pytest_asyncio.fixture

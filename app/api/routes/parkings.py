@@ -8,13 +8,15 @@ back to a live 5T API fetch on cache miss.
 from datetime import datetime, timezone
 
 import structlog
-from fastapi import APIRouter, Depends, Header, Security
+from fastapi import APIRouter, Depends, Header, Query, Security
 from fastapi.responses import JSONResponse, Response
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_cache_service, get_parking_repository, verify_api_key
-from app.api.schemas import ParkingListResponse, ParkingSchema
+from app.api.dependencies import get_cache_service, get_db_session, get_parking_repository, verify_api_key
+from app.api.schemas import ParkingHistoryResponse, ParkingListResponse, ParkingSchema, SnapshotSchema
 from app.domain.exceptions import ParkingNotFoundError
 from app.domain.interfaces import CacheService, ParkingRepository
+from app.infrastructure.db_repository import ParkingDBRepository
 from app.infrastructure.redis_cache import PARKINGS_CACHE_KEY
 
 logger = structlog.get_logger()
@@ -77,3 +79,21 @@ async def get_parking(
         if p.id == parking_id:
             return p
     raise ParkingNotFoundError(parking_id)
+
+
+@router.get("/{parking_id}/history", response_model=ParkingHistoryResponse)
+async def get_parking_history(
+    parking_id: int,
+    hours: int = Query(24, ge=1, le=720),
+    api_key: str | None = Security(verify_api_key),
+    db: AsyncSession = Depends(get_db_session),
+) -> ParkingHistoryResponse:
+    """Get availability history for a parking (default: last 24h)."""
+    repo = ParkingDBRepository(db)
+    snapshots = await repo.get_history(parking_id, hours)
+    return ParkingHistoryResponse(
+        parking_id=parking_id,
+        hours=hours,
+        total_snapshots=len(snapshots),
+        snapshots=[SnapshotSchema.model_validate(s) for s in snapshots],
+    )

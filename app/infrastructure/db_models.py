@@ -38,7 +38,9 @@ class ParkingEntity(Base):
     total_spots: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     lat: Mapped[float] = mapped_column(Float, nullable=False)
     lng: Mapped[float] = mapped_column(Float, nullable=False)
-    location = mapped_column(Geography(geometry_type="POINT", srid=4326), nullable=True)
+    location = mapped_column(
+        Geography(geometry_type="POINT", srid=4326, spatial_index=False), nullable=True
+    )
 
     detail: Mapped["ParkingDetailEntity | None"] = relationship(
         back_populates="parking", lazy="joined", uselist=False

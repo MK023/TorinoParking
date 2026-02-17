@@ -80,6 +80,23 @@ class ParkingListResponse(BaseModel):
     parkings: list[ParkingSchema]
 
 
+class SnapshotSchema(BaseModel):
+    model_config = {"from_attributes": True}
+
+    free_spots: int | None = None
+    total_spots: int
+    status: int
+    tendence: int | None = None
+    recorded_at: datetime
+
+
+class ParkingHistoryResponse(BaseModel):
+    parking_id: int
+    hours: int
+    total_snapshots: int
+    snapshots: list[SnapshotSchema]
+
+
 class HealthResponse(BaseModel):
     status: str
     version: str
