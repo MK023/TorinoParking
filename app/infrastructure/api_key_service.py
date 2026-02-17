@@ -13,14 +13,13 @@ from datetime import datetime, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.infrastructure.db_models import ApiKeyEntity
-
-_HMAC_SALT = b"torino-parking-api-key-salt-v1"
 
 
 def hash_api_key(raw_key: str) -> str:
-    """Derive a hex SHA-256 HMAC from *raw_key* using a static salt."""
-    return hmac.new(_HMAC_SALT, raw_key.encode(), hashlib.sha256).hexdigest()
+    """Derive a hex SHA-256 HMAC from *raw_key* using a configurable salt."""
+    return hmac.new(settings.hmac_salt.encode(), raw_key.encode(), hashlib.sha256).hexdigest()
 
 
 def generate_raw_key() -> str:
