@@ -15,10 +15,14 @@ async def _seed_parkings(db_session):
     """Insert parkings with PostGIS coordinates."""
     await db_session.execute(
         text(
-            "INSERT INTO parkings (id, name, total_spots, lat, lng, location) VALUES "
-            "(901, 'Centro', 100, 45.0703, 7.6869, ST_GeogFromText('SRID=4326;POINT(7.6869 45.0703)')), "
-            "(902, 'Vicino', 80, 45.0710, 7.6875, ST_GeogFromText('SRID=4326;POINT(7.6875 45.0710)')), "
-            "(903, 'Lontano', 60, 45.1200, 7.7500, ST_GeogFromText('SRID=4326;POINT(7.7500 45.1200)')) "
+            "INSERT INTO parkings"
+            " (id, name, total_spots, lat, lng, location) VALUES "
+            "(901, 'Centro', 100, 45.0703, 7.6869,"
+            " ST_GeogFromText('SRID=4326;POINT(7.6869 45.0703)')), "
+            "(902, 'Vicino', 80, 45.0710, 7.6875,"
+            " ST_GeogFromText('SRID=4326;POINT(7.6875 45.0710)')), "
+            "(903, 'Lontano', 60, 45.1200, 7.7500,"
+            " ST_GeogFromText('SRID=4326;POINT(7.7500 45.1200)')) "
             "ON CONFLICT (id) DO NOTHING"
         )
     )

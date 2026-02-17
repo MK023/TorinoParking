@@ -9,7 +9,6 @@ import httpx
 import redis.asyncio as aioredis
 from fastapi import HTTPException, Request, Security
 from fastapi.security import APIKeyHeader
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.infrastructure.database import async_session_factory

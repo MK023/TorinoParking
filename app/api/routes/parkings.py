@@ -12,8 +12,19 @@ from fastapi import APIRouter, Depends, Header, Query, Security
 from fastapi.responses import JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_cache_service, get_db_session, get_parking_repository, verify_api_key
-from app.api.schemas import ParkingDetailSchema, ParkingHistoryResponse, ParkingListResponse, ParkingSchema, SnapshotSchema
+from app.api.dependencies import (
+    get_cache_service,
+    get_db_session,
+    get_parking_repository,
+    verify_api_key,
+)
+from app.api.schemas import (
+    ParkingDetailSchema,
+    ParkingHistoryResponse,
+    ParkingListResponse,
+    ParkingSchema,
+    SnapshotSchema,
+)
 from app.domain.exceptions import ParkingNotFoundError
 from app.domain.interfaces import CacheService, ParkingRepository
 from app.infrastructure.db_repository import ParkingDBRepository
@@ -122,10 +133,13 @@ async def get_nearby_parkings(
                 if e.detail
                 else None
             )
+            merged_detail = (
+                ParkingDetailSchema(**detail_dict)
+                if detail_dict
+                else live.detail
+            )
             parkings.append(
-                live.model_copy(
-                    update={"detail": ParkingDetailSchema(**detail_dict) if detail_dict else live.detail}
-                )
+                live.model_copy(update={"detail": merged_detail})
             )
         else:
             detail_dict = (

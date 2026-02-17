@@ -1,30 +1,42 @@
-interface FilterState {
-  onlyAvailable: boolean;
-  minSpots: number;
-  nearbyMode: boolean;
-  userLat: number | null;
-  userLng: number | null;
-  radius: number;
-}
+import type { Filters as FilterState } from "../hooks/useParkings";
+import { Accessibility, CreditCard, Roof, Train } from "./Icons";
 
 interface Props {
   filters: FilterState;
   onChange: (f: FilterState) => void;
 }
 
+interface PillDef {
+  key: keyof Pick<FilterState, "onlyAvailable" | "disabledSpots" | "electronicPayment" | "covered" | "metroAccess">;
+  label: string;
+  icon?: React.ReactNode;
+}
+
+const pills: PillDef[] = [
+  { key: "onlyAvailable", label: "Disponibili" },
+  { key: "disabledSpots", label: "Disabili", icon: <Accessibility size={14} /> },
+  { key: "electronicPayment", label: "POS / Carte", icon: <CreditCard size={14} /> },
+  { key: "covered", label: "Coperto", icon: <Roof size={14} /> },
+  { key: "metroAccess", label: "Metro", icon: <Train size={14} /> },
+];
+
 export default function Filters({ filters, onChange }: Props) {
   return (
     <div className="filters">
-      <label className="filter-toggle">
-        <input
-          type="checkbox"
-          checked={filters.onlyAvailable}
-          onChange={(e) =>
-            onChange({ ...filters, onlyAvailable: e.target.checked })
-          }
-        />
-        <span>Solo disponibili</span>
-      </label>
+      <div className="filter-pills">
+        {pills.map((pill) => (
+          <button
+            key={pill.key}
+            className={`filter-pill${filters[pill.key] ? " active" : ""}`}
+            onClick={() =>
+              onChange({ ...filters, [pill.key]: !filters[pill.key] })
+            }
+          >
+            {pill.icon}
+            {pill.label}
+          </button>
+        ))}
+      </div>
 
       <label className="filter-range">
         <span>Posti liberi min: {filters.minSpots}</span>

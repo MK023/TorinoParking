@@ -6,7 +6,7 @@ import Sidebar from "./components/Sidebar";
 import "./styles/app.css";
 
 export default function App() {
-  const { parkings, lastUpdate, loading, error, filters, setFilters, refresh } =
+  const { parkings, allParkings, lastUpdate, loading, error, filters, setFilters, refresh } =
     useParkings();
   const [selectedParking, setSelectedParking] = useState<Parking | null>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
@@ -43,6 +43,7 @@ export default function App() {
     <div className="app-layout">
       <Sidebar
         parkings={parkings}
+        allParkings={allParkings}
         loading={loading}
         error={error}
         lastUpdate={lastUpdate}

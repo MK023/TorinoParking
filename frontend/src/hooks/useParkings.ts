@@ -4,17 +4,50 @@ import { getNearbyParkings, getParkings } from "../services/api";
 
 const REFRESH_INTERVAL = 120_000; // 2 minutes
 
-interface Filters {
+export interface Filters {
   onlyAvailable: boolean;
   minSpots: number;
   nearbyMode: boolean;
   userLat: number | null;
   userLng: number | null;
   radius: number;
+  disabledSpots: boolean;
+  electronicPayment: boolean;
+  covered: boolean;
+  metroAccess: boolean;
+}
+
+const ELECTRONIC_KEYWORDS = [
+  "carte", "visa", "mastercard", "bancomat", "telepass",
+  "carta", "pos", "contactless",
+];
+
+function matchesClientFilters(p: Parking, f: Filters): boolean {
+  if (f.onlyAvailable && !p.is_available) return false;
+  if (f.minSpots > 0 && (p.free_spots === null || p.free_spots < f.minSpots))
+    return false;
+  if (f.disabledSpots) {
+    if (!p.detail || !p.detail.disabled_spots || p.detail.disabled_spots <= 0)
+      return false;
+  }
+  if (f.electronicPayment) {
+    if (!p.detail || p.detail.payment_methods.length === 0) return false;
+    const methods = p.detail.payment_methods
+      .join(" ")
+      .toLowerCase();
+    if (!ELECTRONIC_KEYWORDS.some((kw) => methods.includes(kw))) return false;
+  }
+  if (f.covered) {
+    if (!p.detail || !p.detail.is_covered) return false;
+  }
+  if (f.metroAccess) {
+    if (!p.detail || !p.detail.has_metro_access) return false;
+  }
+  return true;
 }
 
 export function useParkings() {
-  const [parkings, setParkings] = useState<Parking[]>([]);
+  const [allParkings, setAllParkings] = useState<Parking[]>([]);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +58,10 @@ export function useParkings() {
     userLat: null,
     userLng: null,
     radius: 1500,
+    disabledSpots: false,
+    electronicPayment: false,
+    covered: false,
+    metroAccess: false,
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
@@ -42,20 +79,17 @@ export function useParkings() {
           50
         );
       } else {
-        data = await getParkings({
-          available: filters.onlyAvailable ? true : undefined,
-          min_spots: filters.minSpots > 0 ? filters.minSpots : undefined,
-        });
+        data = await getParkings();
       }
 
-      setParkings(data.parkings);
+      setAllParkings(data.parkings);
       setLastUpdate(data.last_update);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore di connessione");
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters.nearbyMode, filters.userLat, filters.userLng, filters.radius]);
 
   useEffect(() => {
     setLoading(true);
@@ -65,8 +99,11 @@ export function useParkings() {
     return () => clearInterval(intervalRef.current);
   }, [fetchData]);
 
+  const parkings = allParkings.filter((p) => matchesClientFilters(p, filters));
+
   return {
     parkings,
+    allParkings,
     lastUpdate,
     loading,
     error,

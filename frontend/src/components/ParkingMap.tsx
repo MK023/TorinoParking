@@ -1,22 +1,15 @@
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Parking } from "../types/parking";
+import { getStatusColor, getTendenceInfo } from "../utils/parking";
 import "leaflet/dist/leaflet.css";
 
 const TORINO_CENTER: [number, number] = [45.0703, 7.6869];
 const DEFAULT_ZOOM = 13;
 
-function getMarkerColor(parking: Parking): string {
-  if (!parking.is_available) return "#6b7280"; // gray
-  if (parking.occupancy_percentage === null) return "#6b7280";
-  if (parking.occupancy_percentage >= 90) return "#ef4444"; // red
-  if (parking.occupancy_percentage >= 70) return "#f59e0b"; // amber
-  return "#22c55e"; // green
-}
-
 function createIcon(parking: Parking): L.DivIcon {
-  const color = getMarkerColor(parking);
-  const spots = parking.free_spots !== null ? parking.free_spots : "—";
+  const color = getStatusColor(parking);
+  const spots = parking.free_spots !== null ? parking.free_spots : "\u2014";
   return L.divIcon({
     className: "parking-marker",
     html: `
@@ -39,13 +32,6 @@ function createIcon(parking: Parking): L.DivIcon {
     iconAnchor: [18, 18],
     popupAnchor: [0, -20],
   });
-}
-
-function formatTendence(t: number | null): string {
-  if (t === null) return "";
-  if (t > 0) return " ↑ si sta liberando";
-  if (t < 0) return " ↓ si sta riempiendo";
-  return " → stabile";
 }
 
 interface FlyToProps {
@@ -102,54 +88,59 @@ export default function ParkingMap({ parkings, selectedId, onSelect, userPositio
         />
       )}
 
-      {parkings.map((p) => (
-        <Marker
-          key={p.id}
-          position={[p.lat, p.lng]}
-          icon={createIcon(p)}
-          eventHandlers={{ click: () => onSelect(p) }}
-        >
-          <Popup>
-            <div style={{ minWidth: 180 }}>
-              <strong>{p.name}</strong>
-              <div style={{ margin: "6px 0", fontSize: 13 }}>
-                {p.is_available ? (
-                  <span style={{ color: "#22c55e" }}>
-                    {p.free_spots} / {p.total_spots} posti liberi
-                  </span>
-                ) : (
-                  <span style={{ color: "#ef4444" }}>{p.status_label}</span>
-                )}
-                <span style={{ fontSize: 11, opacity: 0.7 }}>
-                  {formatTendence(p.tendence)}
-                </span>
-              </div>
-              {p.occupancy_percentage !== null && (
-                <div style={{
-                  height: 6,
-                  background: "#374151",
-                  borderRadius: 3,
-                  overflow: "hidden",
-                  marginTop: 4,
-                }}>
+      {parkings.map((p) => {
+        const tendence = getTendenceInfo(p.tendence);
+        return (
+          <Marker
+            key={p.id}
+            position={[p.lat, p.lng]}
+            icon={createIcon(p)}
+            eventHandlers={{ click: () => onSelect(p) }}
+          >
+            <Popup>
+              <div style={{ minWidth: 180 }}>
+                <strong>{p.name}</strong>
+                <div style={{ margin: "6px 0", fontSize: 13 }}>
+                  {p.is_available ? (
+                    <span style={{ color: "#22c55e" }}>
+                      {p.free_spots} / {p.total_spots} posti liberi
+                    </span>
+                  ) : (
+                    <span style={{ color: "#ef4444" }}>{p.status_label}</span>
+                  )}
+                  {tendence.icon && (
+                    <span style={{ fontSize: 11, opacity: 0.7 }}>
+                      {" "}{tendence.icon} {tendence.text}
+                    </span>
+                  )}
+                </div>
+                {p.occupancy_percentage !== null && (
                   <div style={{
-                    height: "100%",
-                    width: `${p.occupancy_percentage}%`,
-                    background: getMarkerColor(p),
+                    height: 6,
+                    background: "#374151",
                     borderRadius: 3,
-                    transition: "width 0.5s",
-                  }} />
-                </div>
-              )}
-              {p.detail?.address && (
-                <div style={{ fontSize: 11, marginTop: 6, opacity: 0.7 }}>
-                  {p.detail.address}
-                </div>
-              )}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+                    overflow: "hidden",
+                    marginTop: 4,
+                  }}>
+                    <div style={{
+                      height: "100%",
+                      width: `${p.occupancy_percentage}%`,
+                      background: getStatusColor(p),
+                      borderRadius: 3,
+                      transition: "width 0.5s",
+                    }} />
+                  </div>
+                )}
+                {p.detail?.address && (
+                  <div style={{ fontSize: 11, marginTop: 6, opacity: 0.7 }}>
+                    {p.detail.address}
+                  </div>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 }
