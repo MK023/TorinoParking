@@ -1,6 +1,15 @@
-# ⚖️ GDPR Compliance - Data Protection & Privacy
+# GDPR Compliance - Data Protection & Privacy
 
-Guida completa alla compliance GDPR per l'app Parking Torino.
+> **Stato attuale:** Questo documento e' una guida di compliance per quando
+> verranno implementate funzionalita' utente. Attualmente l'API gestisce
+> esclusivamente dati pubblici sui parcheggi (dati open data 5T/GTT) e
+> **non raccoglie ne' tratta dati personali (PII)**.
+>
+> Non esistono ancora: tabelle utenti, autenticazione JWT, endpoint GDPR,
+> encryption at rest con Fernet, o task Celery. Queste sono tutte
+> funzionalita' pianificate descritte come riferimento.
+
+Guida alla compliance GDPR per l'app Parking Torino.
 
 ## Principi GDPR Fondamentali
 
@@ -196,8 +205,7 @@ async def cancel_deletion(current_user: User = Depends(get_current_user)):
     
     return {"message": "Deletion cancelled"}
 
-# Celery task - Execute deletions
-@celery_app.task
+# Scheduled task - Execute deletions (esempio, non implementato)
 def execute_pending_deletions():
     """
     Run daily - permanently delete users past grace period
@@ -332,7 +340,9 @@ CREATE INDEX idx_audit_user_action ON gdpr_audit_log(user_id, action, timestamp)
 
 ## Data Encryption
 
-### Encryption at Rest
+> **Non implementato.** Le sezioni seguenti sono riferimento per implementazione futura.
+
+### Encryption at Rest (pianificato)
 
 ```python
 from cryptography.fernet import Fernet

@@ -21,6 +21,10 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Test suite: unit + integration (testcontainers) + e2e (respx)
 - [x] CI/CD GitHub Actions: lint → test → Docker build
 - [x] Migration Alembic: 001 schema iniziale, 002 api_keys, 003 parking_details + seed
+- [x] HMAC salt configurabile via env var (non piu' hardcoded)
+- [x] Endpoint `/api/v1/parkings/nearby` - ricerca geo-spaziale PostGIS
+- [x] Endpoint `/api/v1/parkings/{id}/history` - storico disponibilita'
+- [x] Filtri su `/api/v1/parkings`: `?available=true`, `?min_spots=N`
 
 ---
 
@@ -31,7 +35,7 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
   - [$] Opzione managed: AWS ALB / Cloudflare
 - [ ] Rotazione automatica API key con grace period (vecchia key valida 24h dopo rotazione)
 - [ ] Audit log: tabella `audit_events` con ogni operazione admin (chi, cosa, quando, IP)
-- [ ] HMAC salt rotabile via env var con supporto multi-salt in fase di migrazione
+- [ ] HMAC salt rotabile via env var con supporto multi-salt in fase di migrazione (salt singolo gia' configurabile via env)
 - [ ] CORS lockdown: origini specifiche per produzione (no wildcard)
 - [ ] Helmet-style headers completi: CSP, HSTS, Referrer-Policy, Permissions-Policy
 - [ ] Secrets management: Doppler o AWS Secrets Manager (no .env in produzione)
@@ -111,10 +115,10 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [ ] Dati di affluenza storici per previsioni (vedi ML sotto)
 
 ### Endpoint dati avanzati
-- [ ] `GET /api/v1/parkings/{id}/history?from=&to=` — storico disponibilita'
-- [ ] `GET /api/v1/parkings/nearby?lat=&lng=&radius=` — ricerca geospaziale (infrastruttura PostGIS gia' pronta)
+- [x] `GET /api/v1/parkings/{id}/history?from=&to=` — storico disponibilita'
+- [x] `GET /api/v1/parkings/nearby?lat=&lng=&radius=` — ricerca geospaziale PostGIS
 - [ ] `GET /api/v1/parkings?payment=telepass` — filtro per metodo pagamento
-- [ ] `GET /api/v1/parkings?available=true&min_spots=5` — filtri disponibilita'
+- [x] `GET /api/v1/parkings?available=true&min_spots=5` — filtri disponibilita'
 - [ ] `GET /api/v1/parkings?sort=distance&lat=&lng=` — ordinamento per distanza
 - [ ] Aggregazioni: occupazione media per fascia oraria/giorno della settimana
 - [ ] Export CSV/JSON per analisi offline

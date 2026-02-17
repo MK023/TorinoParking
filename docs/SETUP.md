@@ -1,4 +1,4 @@
-# 🚀 Setup & Installation Guide
+# Setup & Installation Guide
 
 Guida completa per setup ambiente di sviluppo.
 
@@ -12,7 +12,7 @@ Guida completa per setup ambiente di sviluppo.
 
 ### Recommended
 - **Dockhand** ([https://dockhand.pro](https://dockhand.pro)) - Docker UI manager
-- **VS Code** con extensions (vedi TOOLS.md)
+- **VS Code** con extensions Python e Docker
 - **Claude Code** - AI coding assistant
 
 ## Quick Start (5 minuti)
@@ -25,16 +25,12 @@ cd torino-parking
 # 2. Copy environment template
 cp .env.example .env
 
-# 3. Generate strong secrets
+# 3. Generate strong admin key
 # macOS/Linux:
-export API_KEY=$(openssl rand -base64 32)
-export JWT_SECRET=$(openssl rand -base64 32)
-export ENCRYPTION_KEY=$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+export ADMIN_API_KEY=$(openssl rand -base64 32)
 
 # Add to .env
-echo "API_KEY=$API_KEY" >> .env
-echo "JWT_SECRET=$JWT_SECRET" >> .env
-echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> .env
+echo "ADMIN_API_KEY=$ADMIN_API_KEY" >> .env
 
 # 4. Start tutto con Docker Compose
 docker-compose up -d
@@ -60,17 +56,16 @@ open http://localhost:8000/docs
 ### 1. Environment Variables
 
 ```bash
-# .env
+# .env (vedi .env.example per template completo)
 # === App Settings ===
 APP_NAME="Parking Torino API"
 VERSION="1.0.0"
-ENVIRONMENT="development"  # development | staging | production
+ENVIRONMENT=development
 DEBUG=true
 
 # === Security ===
-API_KEY=your-secret-api-key-min-32-chars
-JWT_SECRET=your-jwt-secret-key
-ENCRYPTION_KEY=your-fernet-encryption-key
+ADMIN_API_KEY=your-admin-secret-key-min-32-characters-here
+HMAC_SALT=torino-parking-api-key-salt-v1
 
 # === Database ===
 DATABASE_URL=postgresql+asyncpg://parking:parking123@postgres:5432/parking
@@ -85,20 +80,21 @@ REDIS_URL=redis://redis:6379/0
 FIVE_T_API_URL=https://opendata.5t.torino.it/get_pk
 FIVE_T_TIMEOUT=10
 
+# === Cache ===
+CACHE_TTL=120
+
 # === Rate Limiting ===
-RATE_LIMIT_ANONYMOUS=20     # requests per minute
+RATE_LIMIT_ANONYMOUS=20
 RATE_LIMIT_AUTHENTICATED=100
 RATE_LIMIT_PREMIUM=1000
-
-# === Monitoring ===
-SENTRY_DSN=  # Optional: Add your Sentry DSN
 
 # === CORS ===
 CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
 
-# === Celery ===
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/0
+# === Monitoring (opzionale) ===
+SENTRY_DSN=
+LOG_LEVEL=INFO
+SNAPSHOT_RETENTION_DAYS=30
 ```
 
 ### 2. Docker Compose Stack
@@ -120,12 +116,10 @@ docker-compose up -d --build
 ```
 
 **Servizi disponibili:**
-- `backend` - FastAPI API (porta 8000)
-- `postgres` - Database (porta 5432)
-- `redis` - Cache/Queue (porta 6379)
-- `celery_worker` - Background tasks
-- `celery_beat` - Scheduler
-- `flower` - Celery monitoring UI (porta 5555)
+- `backend` - FastAPI API + APScheduler (porta 8000)
+- `postgres` - PostgreSQL + PostGIS (porta 5432)
+- `redis` - Cache e rate limiting (porta 6379)
+- `dockhand` - Docker management UI (porta 3000)
 
 ### 3. Dockhand Setup (Opzionale ma raccomandato)
 
@@ -190,7 +184,7 @@ code --install-extension charliermarsh.ruff
 code --install-extension ms-azuretools.vscode-docker
 ```
 
-Vedi [TOOLS.md](TOOLS.md) per lista completa.
+Altre estensioni utili: Ruff, Pylance, GitLens.
 
 ### Code Quality Tools
 
@@ -208,7 +202,7 @@ mypy app/
 pytest tests/ -v --cov=app
 
 # All checks
-./scripts/check.sh
+ruff check app/ && ruff format --check app/ && pytest
 ```
 
 ### Pre-commit Hooks
@@ -300,21 +294,15 @@ docker-compose build --no-cache backend
 
 ## Production Deployment
 
-Vedi [DEPLOYMENT.md](DEPLOYMENT.md) per:
-- Deploy su Fly.io
-- CI/CD GitHub Actions
-- Secrets management
-- Monitoring setup
-- Backup strategy
+Non ancora documentato. Vedi [ROADMAP.md](../ROADMAP.md) sezione "Infrastruttura e Deploy" per le opzioni pianificate.
 
 ## Next Steps
 
 Dopo setup:
-1. ✅ Leggi [ARCHITECTURE.md](ARCHITECTURE.md) - Capire struttura
-2. ✅ Leggi [BEST_PRACTICES.md](BEST_PRACTICES.md) - Code standards
-3. ✅ Crea primo endpoint - Vedi esempi in `app/api/`
-4. ✅ Scrivi tests - Usa fixtures in `tests/conftest.py`
-5. ✅ Deploy staging - GitHub Actions automatic
+1. Leggi [ARCHITECTURE.md](ARCHITECTURE.md) - Capire struttura
+2. Esplora gli endpoint in `app/api/routes/`
+3. Scrivi tests - Usa fixtures in `tests/conftest.py`
+4. Vedi il [ROADMAP.md](../ROADMAP.md) per funzionalita' pianificate
 
 ## Useful Commands
 
@@ -329,7 +317,7 @@ docker-compose restart backend    # Restart service
 # === Database ===
 docker-compose exec postgres psql -U parking -d parking
 \dt                    # List tables
-\d parking_availability_history  # Describe table
+\d parking_snapshots   # Describe table
 SELECT COUNT(*) FROM parkings;   # Query
 
 # === Redis ===
@@ -338,20 +326,15 @@ KEYS *                # List all keys
 GET parkings:all      # Get value
 FLUSHALL              # Clear everything
 
-# === Celery ===
-docker-compose logs -f celery_worker  # Worker logs
-docker-compose logs -f celery_beat    # Scheduler logs
-open http://localhost:5555            # Flower UI
-
 # === API Testing ===
 curl http://localhost:8000/health
 curl http://localhost:8000/api/v1/parkings
 http GET http://localhost:8000/api/v1/parkings  # httpie (better curl)
 
 # === Code Quality ===
-./scripts/lint.sh     # Run all linters
-./scripts/test.sh     # Run tests
-./scripts/format.sh   # Format code
+ruff check app/       # Linting
+ruff format app/      # Formatting
+pytest tests/ -v      # Run tests
 ```
 
 ## Support

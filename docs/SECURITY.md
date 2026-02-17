@@ -1,6 +1,34 @@
-# 🔐 Security - Threat Model & Best Practices
+# Security - Threat Model & Best Practices
 
-Documento completo su sicurezza, threat modeling e implementazione.
+Documento su sicurezza, threat modeling e linee guida.
+
+## Stato Implementazione
+
+### Implementato
+- API key validation con HMAC-SHA256 (hash in PostgreSQL, salt configurabile via env)
+- Admin CRUD API key protetto da `X-Admin-Key`
+- Rate limiting sliding window multi-tier (anonymous/authenticated/premium) via Redis
+- Cache in-memory API key con TTL 60s
+- Input validation tramite Pydantic su tutti gli endpoint
+- CORS middleware configurato
+- SQLAlchemy ORM (prevenzione SQL injection)
+- Secrets in environment variables (`.env`, non nel codice)
+
+### Non ancora implementato (materiale di riferimento sotto)
+- HTTPS/TLS (nessun reverse proxy configurato, in development si usa HTTP)
+- Database encryption at rest
+- JWT authentication (non ci sono utenti, solo API key)
+- Security headers middleware (HSTS, CSP, etc.)
+- Security scanning automatico in CI (Bandit, Trivy, Safety, GitLeaks)
+- Prometheus/Sentry monitoring
+- Audit log table
+- RBAC (role-based access control)
+
+> **Nota:** Le sezioni seguenti servono come linee guida e materiale di
+> riferimento per quando queste funzionalita' verranno implementate.
+> Non descrivono lo stato attuale del sistema.
+
+---
 
 ## Threat Model - OWASP Top 10 (2021)
 
@@ -22,11 +50,11 @@ async def verify_api_key(x_api_key: str = Header(...)):
 
 ### A02 - Cryptographic Failures
 **Mitigazioni:**
-- ✅ HTTPS only (TLS 1.3)
-- ✅ Secrets in environment variables
-- ✅ Database encryption at rest
-- ✅ Bcrypt per password hashing (se necessario)
-- ✅ No secrets in Git
+- [ ] HTTPS only (TLS 1.3) — non ancora configurato
+- [x] Secrets in environment variables
+- [ ] Database encryption at rest — non implementato
+- [x] HMAC-SHA256 per API key hashing (non bcrypt)
+- [x] No secrets in Git
 
 **Configurazione:**
 ```python
@@ -175,7 +203,7 @@ from passlib.hash import bcrypt
 hashed_key = bcrypt.hash(api_key)
 ```
 
-**JWT Implementation (se necessario):**
+**JWT Implementation (non implementato - riferimento per il futuro):**
 ```python
 from jose import jwt
 from datetime import datetime, timedelta
@@ -389,7 +417,7 @@ API REST con JWT in header → NO CSRF needed
 API con session cookies → CSRF OBBLIGATORIO
 ```
 
-**Per JWT (tuo caso):**
+**Per JWT (non ancora implementato, riferimento futuro):**
 ```python
 # NO CSRF token needed
 # JWT in Authorization header = safe from CSRF
@@ -447,10 +475,10 @@ def sanitize_html(cls, v):
 
 ```bash
 # .env (NEVER commit to Git!)
-DATABASE_URL=postgresql://user:pass@localhost/db
-API_KEY=your-secret-api-key-min-32-chars
-JWT_SECRET=your-jwt-secret-key
-SENTRY_DSN=https://...
+DATABASE_URL=postgresql+asyncpg://parking:parking123@postgres:5432/parking
+ADMIN_API_KEY=your-admin-secret-key-min-32-chars
+HMAC_SALT=your-hmac-salt
+SENTRY_DSN=  # opzionale
 ```
 
 ### Docker Secrets (Production)
@@ -486,10 +514,10 @@ async def verify_api_key(api_key: str):
 
 ## Security Testing
 
-### Automated Scans
+### Automated Scans (non ancora configurati nella CI)
 
 ```yaml
-# .github/workflows/security.yml
+# .github/workflows/security.yml (esempio, non presente nel repo)
 jobs:
   security:
     steps:
@@ -521,9 +549,9 @@ jobs:
 
 ## Incident Response Plan
 
-### Detection
-- Sentry alerts for errors
-- Prometheus alerts for anomalies
+### Detection (pianificato)
+- Sentry alerts for errors (non ancora configurato)
+- Prometheus alerts for anomalies (non ancora configurato)
 - Rate limit violations log
 - Failed auth attempts monitoring
 
