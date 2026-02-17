@@ -60,6 +60,16 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [ ] Floating action button sulla mappa per riaprire sidebar
 - [ ] Mini-badge flottante con stats (parcheggi aperti / posti liberi) visibile a sidebar chiusa
 
+### Ottimizzazione mappa e risparmio risorse (mobile)
+- [ ] Tile map in cache locale (Service Worker / cache API) — evita ri-download tile ad ogni apertura
+- [ ] Caricare marker statici (posizione, nome, total_spots) da cache locale, aggiornare solo dati real-time (free_spots, status, tendence) via API leggera
+- [ ] Payload API "light" per consultazione: solo `id`, `free_spots`, `status`, `status_label`, `tendence` (~1 KB vs ~15 KB full)
+- [ ] GPS solo su richiesta esplicita ("Vicino a me"), non in background — risparmio batteria
+- [ ] Navigazione verso parcheggio: handoff a Maps nativo (gia implementato), no GPS continuo in-app
+- [ ] Aggiornamento dati smart: refresh solo se app in foreground (Page Visibility API)
+- [ ] Intervallo refresh adattivo: 2 min in consultazione, 30s dopo tap su "Vicino a me"
+- [x] Parcheggi chiusi/fuori servizio: nascondere tendenza ("si libera" / "si riempie") — non ha senso su parcheggio non operativo
+
 ---
 
 ## Punti di Interesse — Ospedali e Universita

@@ -8,7 +8,7 @@ interface Props {
 
 export default function ParkingCard({ parking, onClick }: Props) {
   const color = getStatusColor(parking);
-  const tendence = getTendenceInfo(parking.tendence);
+  const tendence = getTendenceInfo(parking.tendence, parking);
 
   return (
     <div className="parking-card" onClick={onClick}>

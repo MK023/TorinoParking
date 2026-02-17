@@ -8,11 +8,13 @@ export function getStatusColor(parking: Parking): string {
   return "#22c55e";
 }
 
-export function getTendenceInfo(tendence: number | null): {
-  icon: string;
-  text: string;
-} {
+export function getTendenceInfo(
+  tendence: number | null,
+  parking?: Parking,
+): { icon: string; text: string } {
   if (tendence === null) return { icon: "", text: "" };
+  // Parcheggi chiusi/fuori servizio: nessuna tendenza ha senso
+  if (parking && !parking.is_available) return { icon: "", text: "" };
   if (tendence > 0) return { icon: "\u2191", text: "si libera" };
   if (tendence < 0) return { icon: "\u2193", text: "si riempie" };
   return { icon: "\u2192", text: "stabile" };

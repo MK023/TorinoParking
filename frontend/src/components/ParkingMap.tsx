@@ -89,7 +89,7 @@ export default function ParkingMap({ parkings, selectedId, onSelect, userPositio
       )}
 
       {parkings.map((p) => {
-        const tendence = getTendenceInfo(p.tendence);
+        const tendence = getTendenceInfo(p.tendence, p);
         return (
           <Marker
             key={p.id}
