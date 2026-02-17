@@ -19,8 +19,8 @@ Guida completa per setup ambiente di sviluppo.
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/yourusername/torino-parking.git
-cd torino-parking
+git clone https://github.com/MK023/TorinoParking.git
+cd TorinoParking
 
 # 2. Copy environment template
 cp .env.example .env
@@ -339,6 +339,6 @@ pytest tests/ -v      # Run tests
 
 ## Support
 
-**Issues:** [GitHub Issues](https://github.com/yourusername/torino-parking/issues)
+**Issues:** [GitHub Issues](https://github.com/MK023/TorinoParking/issues)
 **Docs:** `/docs` directory
-**Contact:** your-email@example.com
+**Contact:** Marco Bellingeri - [GitHub](https://github.com/MK023)

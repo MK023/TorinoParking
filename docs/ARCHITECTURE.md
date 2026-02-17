@@ -264,16 +264,14 @@ Pianificato:
 
 ## Monitoring & Observability
 
-> **Stato:** Logging e' implementato. Prometheus e Sentry sono pianificati ma non ancora configurati.
-
-### Logging (Structured)
-- Python logging configurato in `app/logging_config.py`
+### Implementato
+- **structlog** per logging strutturato JSON con correlation ID (request_id)
 - Log level configurabile via env var `LOG_LEVEL`
+- **Sentry** error tracking integrato (opzionale, attivabile via `SENTRY_DSN` in env)
 
 ### Pianificato
-- Prometheus metrics endpoint (`/metrics`)
-- Sentry error tracking
-- Grafana dashboard
+- Prometheus metrics endpoint (`/metrics`) con metriche custom
+- Grafana dashboard preconfigurata
 
 ## ADR (Architecture Decision Records)
 

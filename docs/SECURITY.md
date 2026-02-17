@@ -195,12 +195,15 @@ pip-audit
 import secrets
 
 def generate_api_key():
-    return secrets.token_urlsafe(32)  # 256 bits
+    prefix = secrets.token_hex(4)  # 8-char prefix for identification
+    secret = secrets.token_urlsafe(32)  # 256-bit secret
+    return f"pk_{prefix}_{secret}"
 
-# Storage: hashed in database
-from passlib.hash import bcrypt
-
-hashed_key = bcrypt.hash(api_key)
+# Storage: HMAC-SHA256 hash in database (salt from env var)
+import hmac, hashlib
+hashed_key = hmac.new(
+    settings.hmac_salt.encode(), api_key.encode(), hashlib.sha256
+).hexdigest()
 ```
 
 **JWT Implementation (non implementato - riferimento per il futuro):**
