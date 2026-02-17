@@ -8,6 +8,7 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 
 ## Stato attuale (completato)
 
+### Backend
 - [x] API REST FastAPI async con Redis cache e PostgreSQL/PostGIS
 - [x] Scheduler in-process APScheduler (3 job: fetch 5T, cleanup cache, purge snapshots)
 - [x] Gestione API key con hash SHA-256 HMAC in PostgreSQL
@@ -25,6 +26,19 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Endpoint `/api/v1/parkings/nearby` - ricerca geo-spaziale PostGIS
 - [x] Endpoint `/api/v1/parkings/{id}/history` - storico disponibilita'
 - [x] Filtri su `/api/v1/parkings`: `?available=true`, `?min_spots=N`
+
+### Frontend
+- [x] React 19 + TypeScript SPA con Vite
+- [x] Mappa interattiva Leaflet dark-themed centrata su Torino
+- [x] Marker colorati per occupazione (verde/ambra/rosso/grigio)
+- [x] Geolocalizzazione "Vicino a me" con endpoint nearby
+- [x] Pannello dettaglio con info GTT (tariffe, pagamenti, bus, metro)
+- [x] Grafico storico disponibilita' (ultime 6 ore)
+- [x] Auto-refresh ogni 2 minuti
+- [x] Filtri: solo disponibili, posti minimi, raggio ricerca
+- [x] Ricerca parcheggi per nome
+- [x] Design responsive (mobile + desktop)
+- [x] Docker container con hot reload
 
 ---
 

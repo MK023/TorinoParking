@@ -1,19 +1,36 @@
-# Torino Parking - Real-Time Parking Availability API
+# Torino Parking - Real-Time Parking Availability
 
-Backend API che aggrega dati real-time dall'API Open Data 5T del Comune di Torino per fornire disponibilita parcheggi tramite API REST.
+Applicazione full-stack che aggrega dati real-time dall'API Open Data 5T del Comune di Torino per fornire disponibilita parcheggi tramite mappa interattiva e API REST.
 
 ## Stack Tecnologico
 
+### Backend
 - **FastAPI** (Python 3.12) - API async
 - **PostgreSQL 16 + PostGIS** - storage + query geo-spaziali
 - **Redis 7** - cache con compressione e ETag
 - **APScheduler** - job periodici in-process (fetch dati, cleanup, purge)
-- **Docker + Docker Compose** - orchestrazione locale
-- **GitHub Actions** - CI (lint, test, Docker build)
-- **Sentry** - error tracking (opzionale)
 - **structlog** - logging strutturato JSON
+- **Sentry** - error tracking (opzionale)
 
-## Funzionalita Implementate
+### Frontend
+- **React 19** + **TypeScript** - SPA
+- **Leaflet** (react-leaflet) - mappa interattiva
+- **Vite** - dev server + build
+
+### Infrastruttura
+- **Docker + Docker Compose** - orchestrazione locale (5 servizi)
+- **GitHub Actions** - CI (lint, test, Docker build)
+
+## Funzionalita
+
+### Mappa Interattiva
+- Mappa dark-themed centrata su Torino con marker colorati per occupazione
+- Colori: verde (<70%), ambra (70-90%), rosso (>90%), grigio (non disponibile)
+- Geolocalizzazione: "Vicino a me" con ricerca parcheggi nel raggio
+- Pannello dettaglio con info GTT: tariffe, metodi pagamento, linee bus, metro
+- Grafico storico disponibilita (ultime 6 ore)
+- Auto-refresh ogni 2 minuti
+- Design responsive (mobile + desktop)
 
 ### API Endpoints
 
@@ -43,27 +60,31 @@ Clean Architecture con separazione domain/infrastructure/API:
 - Domain layer: entita frozen dataclass, Protocol per contracts
 - Infrastructure: repository PostgreSQL, client HTTP 5T, cache Redis
 - API: FastAPI routes, middleware stack (security headers, rate limiting, access log, request ID)
+- Frontend: React SPA con Leaflet, hook custom con auto-refresh
 
 ## Quick Start
 
 ```bash
 # 1. Clone
-git clone https://github.com/marcobellingeri/TorinoParking.git
+git clone https://github.com/MK023/TorinoParking.git
 cd TorinoParking
 
 # 2. Configura environment
 cp .env.example .env
 
-# 3. Avvia con Docker Compose
+# 3. Avvia con Docker Compose (backend + frontend + DB + cache)
 docker-compose up -d
 
 # 4. Verifica
 curl http://localhost:8000/health
 ```
 
-L'API sara disponibile su `http://localhost:8000`
-
-Swagger UI: `http://localhost:8000/docs` (solo in development)
+| Servizio | URL |
+|----------|-----|
+| Frontend (mappa) | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| Swagger UI (dev) | http://localhost:8000/docs |
+| Dockhand (Docker UI) | http://localhost:9000 |
 
 ## Test
 
@@ -98,7 +119,7 @@ GitHub Actions pipeline: **ruff lint** -> **pytest con coverage** -> **Docker bu
 
 ## Roadmap
 
-Vedi [ROADMAP.md](ROADMAP.md) per i miglioramenti pianificati: HTTPS/TLS, circuit breaker, Prometheus metrics, user authentication JWT, push notifications.
+Vedi [ROADMAP.md](ROADMAP.md) per i miglioramenti pianificati: HTTPS/TLS, circuit breaker, Prometheus metrics, user authentication JWT, push notifications, app mobile iOS.
 
 ## License
 

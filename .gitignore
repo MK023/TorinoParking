@@ -51,6 +51,13 @@ logs/
 # Never commit Doppler tokens
 .doppler/
 
+# === Node / Frontend ===
+node_modules/
+frontend/dist/
+
+# === Claude Code ===
+.claude/
+
 # === OS ===
 Thumbs.db
 .DS_Store
