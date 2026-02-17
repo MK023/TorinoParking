@@ -36,9 +36,53 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Grafico storico disponibilita' (ultime 6 ore)
 - [x] Auto-refresh ogni 2 minuti
 - [x] Filtri: solo disponibili, posti minimi, raggio ricerca
+- [x] Filtri avanzati pill-toggle: disabili, pagamento elettronico, coperto, metro
 - [x] Ricerca parcheggi per nome
 - [x] Design responsive (mobile + desktop)
+- [x] Mobile bottom-sheet con drag handle e touch target 44px
+- [x] Libreria icone SVG (sostituisce emoji cross-platform)
+- [x] Pannello dettaglio con sezioni condizionali (tariffe griglia, badge pagamento, trasporti)
+- [x] Grafico storico aggregato per ora (max 7 barre)
+- [x] Banner "parcheggio piu vicino" con navigatore nativo
+- [x] Bottone "Naviga" con deep link Apple Maps / Google Maps
 - [x] Docker container con hot reload
+
+---
+
+## Prossimi passi — Frontend UX
+
+### Sidebar collassabile e mappa interattiva
+- [ ] Sidebar chiudibile con toggle (freccia o hamburger) per mappa full-screen
+- [ ] Interazione diretta con marker sulla mappa (i dati real-time sono gia visibili)
+- [ ] Animazione fluida apertura/chiusura sidebar (CSS transform, no reflow)
+- [ ] Stato sidebar persistente (localStorage) tra sessioni
+- [ ] Su mobile: bottom-sheet con 3 stati (chiuso, meta, pieno) via touch drag
+- [ ] Floating action button sulla mappa per riaprire sidebar
+- [ ] Mini-badge flottante con stats (parcheggi aperti / posti liberi) visibile a sidebar chiusa
+
+---
+
+## Punti di Interesse — Ospedali e Universita
+
+### Ospedali e Pronto Soccorso
+- [ ] Integrazione dati ospedali Torino (ASL Citta di Torino / Regione Piemonte open data)
+- [ ] Posizioni pronto soccorso con coordinate GPS
+- [ ] Suggerimento parcheggio piu vicino a un ospedale selezionato
+- [ ] Layer dedicato sulla mappa (toggle on/off) con icona ospedale
+- [ ] Possibile integrazione tempi attesa PS (dati Regione Piemonte se disponibili)
+
+### Universita
+- [ ] Sedi UniTo (Universita di Torino) — campus, facolta, biblioteche
+- [ ] Sedi PoliTo (Politecnico di Torino) — campus Corso Duca degli Abruzzi, Lingotto, Mirafiori
+- [ ] Layer dedicato sulla mappa con icona universita
+- [ ] Suggerimento parcheggio piu vicino + economico per studenti
+- [ ] Possibile integrazione orari lezioni per previsione affluenza parcheggi vicini
+
+### Architettura POI generica
+- [ ] Modello dati `points_of_interest` con categoria, nome, coordinate, metadata
+- [ ] Endpoint `GET /api/v1/poi?category=hospital&lat=&lng=&radius=`
+- [ ] Sistema layer sulla mappa con toggle per categoria
+- [ ] Routing: "trova parcheggio vicino a [POI]" come funzionalita principale
 
 ---
 
