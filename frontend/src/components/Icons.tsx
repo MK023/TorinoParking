@@ -210,3 +210,21 @@ export function Moon(p: IconProps) {
     </Svg>
   );
 }
+
+export function Hospital(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 3h18v18H3zM12 7v10M7 12h10" />
+    </Svg>
+  );
+}
+
+export function GraduationCap(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M22 10 12 5 2 10l10 5 10-5z" />
+      <path d="M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5" />
+      <path d="M22 10v6" />
+    </Svg>
+  );
+}

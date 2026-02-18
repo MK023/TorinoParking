@@ -926,6 +926,12 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* === POI Markers === */
+.poi-marker {
+  background: none !important;
+  border: none !important;
+}
+
 /* === Mobile Responsive - Bottom Sheet === */
 @media (max-width: 768px) {
   .app-layout {

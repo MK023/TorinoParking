@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Parking } from "../types/parking";
+import type { POI, POICategory } from "../types/poi";
 import { getStatusColor, getTendenceInfo } from "../utils/parking";
+import POILayer from "./POILayer";
 import "leaflet/dist/leaflet.css";
 
 const TORINO_CENTER: [number, number] = [45.0703, 7.6869];
@@ -63,9 +65,13 @@ interface Props {
   onSelect: (parking: Parking) => void;
   userPosition: [number, number] | null;
   onMapClick?: () => void;
+  pois?: POI[];
+  activePOILayers?: Set<POICategory>;
+  selectedPOI?: POI | null;
+  onSelectPOI?: (poi: POI | null) => void;
 }
 
-export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect, userPosition, onMapClick }: Props) {
+export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect, userPosition, onMapClick, pois, activePOILayers, selectedPOI, onSelectPOI }: Props) {
   const flyTarget = userPosition || TORINO_CENTER;
   const flyZoom = userPosition ? 15 : DEFAULT_ZOOM;
 
@@ -155,6 +161,16 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
           </Marker>
         );
       })}
+
+      {pois && activePOILayers && onSelectPOI && (
+        <POILayer
+          pois={pois}
+          activeLayers={activePOILayers}
+          parkings={parkings}
+          selectedPOI={selectedPOI ?? null}
+          onSelectPOI={onSelectPOI}
+        />
+      )}
     </MapContainer>
   );
 }
