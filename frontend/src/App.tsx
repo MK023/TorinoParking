@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Parking } from "./types/parking";
+import type { POI, POICategory } from "./types/poi";
+import { poiData } from "./data/poi";
 import { useParkings } from "./hooks/useParkings";
 import { useBottomSheet } from "./hooks/useBottomSheet";
 import ParkingMap from "./components/ParkingMap";
@@ -21,6 +23,8 @@ export default function App() {
     useParkings();
   const [selectedParking, setSelectedParking] = useState<Parking | null>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+  const [poiLayers, setPoiLayers] = useState<Set<POICategory>>(new Set());
+  const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
 
   const isMobile = useIsMobile();
   const bottomSheet = useBottomSheet();
@@ -75,6 +79,24 @@ export default function App() {
     setSelectedParking(parking);
   }, []);
 
+  const togglePOILayer = useCallback((category: POICategory) => {
+    setPoiLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+        if (selectedPOI?.category === category) setSelectedPOI(null);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  }, [selectedPOI]);
+
+  const handleSelectPOI = useCallback((poi: POI | null) => {
+    setSelectedPOI(poi);
+    if (poi) setSelectedParking(null);
+  }, []);
+
   const handleMapClick = useCallback(() => {
     if (isMobile) {
       bottomSheet.setSheetState("closed");
@@ -99,6 +121,10 @@ export default function App() {
         bottomSheet={isMobile ? bottomSheet : undefined}
         collapsed={!isMobile && sidebarCollapsed}
         onToggleCollapse={toggleSidebar}
+        poiLayers={poiLayers}
+        onTogglePOILayer={togglePOILayer}
+        selectedPOI={selectedPOI}
+        onSelectPOI={handleSelectPOI}
       />
       <ParkingMap
         parkings={parkings}
@@ -106,6 +132,10 @@ export default function App() {
         onSelect={(p) => handleSelect(p)}
         userPosition={userPosition}
         onMapClick={handleMapClick}
+        pois={poiData}
+        activePOILayers={poiLayers}
+        selectedPOI={selectedPOI}
+        onSelectPOI={handleSelectPOI}
       />
     </div>
   );

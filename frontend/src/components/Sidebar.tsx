@@ -1,11 +1,14 @@
 import { useState } from "react";
 import type { Parking } from "../types/parking";
+import type { POI, POICategory } from "../types/poi";
 import type { Filters as FilterState } from "../hooks/useParkings";
 import type { UseBottomSheetReturn } from "../hooks/useBottomSheet";
 import ParkingCard from "./ParkingCard";
 import ParkingDetail from "./ParkingDetail";
 import Filters from "./Filters";
 import NearestParkingBanner from "./NearestParkingBanner";
+import { getNearestParkings } from "./POILayer";
+import { formatDistance } from "../utils/parking";
 import { Search, Crosshair, Refresh, ChevronLeft, ChevronRight } from "./Icons";
 
 interface Props {
@@ -24,6 +27,10 @@ interface Props {
   bottomSheet?: UseBottomSheetReturn;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  poiLayers?: Set<POICategory>;
+  onTogglePOILayer?: (category: POICategory) => void;
+  selectedPOI?: POI | null;
+  onSelectPOI?: (poi: POI | null) => void;
 }
 
 export default function Sidebar({
@@ -42,6 +49,10 @@ export default function Sidebar({
   bottomSheet,
   collapsed,
   onToggleCollapse,
+  poiLayers,
+  onTogglePOILayer,
+  selectedPOI,
+  onSelectPOI,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -138,7 +149,7 @@ export default function Sidebar({
                   </button>
                 </div>
 
-                <Filters filters={filters} onChange={onFilterChange} />
+                <Filters filters={filters} onChange={onFilterChange} poiLayers={poiLayers} onTogglePOILayer={onTogglePOILayer} />
               </div>
 
               {filters.nearbyMode && filters.userLat !== null && filters.userLng !== null && (
@@ -148,6 +159,27 @@ export default function Sidebar({
                   userLng={filters.userLng}
                   onSelect={onSelect}
                 />
+              )}
+
+              {selectedPOI && (
+                <div className="poi-nearby-section">
+                  <div className="poi-nearby-header">
+                    <span>Parcheggi vicino a <strong>{selectedPOI.name}</strong></span>
+                    <button className="poi-nearby-close" onClick={() => onSelectPOI?.(null)}>&#x2715;</button>
+                  </div>
+                  {getNearestParkings(selectedPOI, parkings).map((p) => (
+                    <div
+                      key={p.id}
+                      className="poi-nearby-item"
+                      onClick={() => onSelect(p)}
+                    >
+                      <span className="poi-nearby-name">{p.name}</span>
+                      <span className="poi-nearby-meta">
+                        {p.free_spots} posti &middot; {formatDistance(p.distance)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
 
               <div className="parking-list">

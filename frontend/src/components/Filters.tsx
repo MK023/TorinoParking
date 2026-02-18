@@ -1,9 +1,12 @@
 import type { Filters as FilterState } from "../hooks/useParkings";
-import { Accessibility, CreditCard, Roof, Train } from "./Icons";
+import type { POICategory } from "../types/poi";
+import { Accessibility, CreditCard, Roof, Train, Hospital, GraduationCap } from "./Icons";
 
 interface Props {
   filters: FilterState;
   onChange: (f: FilterState) => void;
+  poiLayers?: Set<POICategory>;
+  onTogglePOILayer?: (category: POICategory) => void;
 }
 
 interface PillDef {
@@ -20,7 +23,7 @@ const pills: PillDef[] = [
   { key: "metroAccess", label: "Metro", icon: <Train size={14} /> },
 ];
 
-export default function Filters({ filters, onChange }: Props) {
+export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer }: Props) {
   return (
     <div className="filters">
       <div className="filter-pills">
@@ -36,6 +39,25 @@ export default function Filters({ filters, onChange }: Props) {
             {pill.label}
           </button>
         ))}
+        {onTogglePOILayer && (
+          <>
+            <span className="filter-pill-divider" />
+            <button
+              className={`filter-pill filter-pill-poi${poiLayers?.has("hospital") ? " active" : ""}`}
+              onClick={() => onTogglePOILayer("hospital")}
+            >
+              <Hospital size={14} />
+              Ospedali
+            </button>
+            <button
+              className={`filter-pill filter-pill-poi${poiLayers?.has("university") ? " active" : ""}`}
+              onClick={() => onTogglePOILayer("university")}
+            >
+              <GraduationCap size={14} />
+              Universita
+            </button>
+          </>
+        )}
       </div>
 
       <label className="filter-range">
