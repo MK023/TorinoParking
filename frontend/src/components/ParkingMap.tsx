@@ -65,7 +65,7 @@ interface Props {
   onMapClick?: () => void;
 }
 
-export default function ParkingMap({ parkings, selectedId, onSelect, userPosition, onMapClick }: Props) {
+export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect, userPosition, onMapClick }: Props) {
   const flyTarget = userPosition || TORINO_CENTER;
   const flyZoom = userPosition ? 15 : DEFAULT_ZOOM;
 

@@ -21,7 +21,6 @@ function aggregateByHour(snapshots: Snapshot[]): HourBucket[] {
   for (const s of snapshots) {
     const d = new Date(s.recorded_at);
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`;
-    const label = d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }).replace(/:\d{2}$/, ":00");
 
     if (!buckets.has(key)) {
       buckets.set(key, { occupancy: [], free: [], total: s.total_spots, ts: d.getTime() });
