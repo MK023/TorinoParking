@@ -1,7 +1,11 @@
 import type { Parking } from "../types/parking";
 
 export function getStatusColor(parking: Parking): string {
-  if (!parking.is_available) return "#6b7280";
+  if (!parking.is_available) {
+    if (parking.status_label === "fuori servizio") return "#dc2626";
+    if (parking.status_label === "nessun dato") return "#9ca3af";
+    return "#6b7280"; // chiuso (fuori orario)
+  }
   if (parking.occupancy_percentage === null) return "#6b7280";
   if (parking.occupancy_percentage >= 90) return "#ef4444";
   if (parking.occupancy_percentage >= 70) return "#f59e0b";
