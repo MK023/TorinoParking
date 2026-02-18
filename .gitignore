@@ -58,6 +58,9 @@ frontend/dist/
 # === Claude Code ===
 .claude/
 
+# === Screenshots (Playwright) ===
+img/
+
 # === OS ===
 Thumbs.db
 .DS_Store

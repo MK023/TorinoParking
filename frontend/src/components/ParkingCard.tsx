@@ -11,10 +11,16 @@ export default function ParkingCard({ parking, onClick }: Props) {
   const tendence = getTendenceInfo(parking.tendence, parking);
   const d = parking.detail;
 
+  const nearlyFull = parking.is_available && parking.occupancy_percentage !== null && parking.occupancy_percentage >= 90;
+
   return (
     <div className="parking-card" onClick={onClick}>
       <div className="parking-card-header">
-        <div className="parking-card-indicator" style={{ background: color }} />
+        {nearlyFull ? (
+          <div className="parking-card-indicator-triangle" style={{ borderTopColor: color }} />
+        ) : (
+          <div className="parking-card-indicator" style={{ background: color }} />
+        )}
         <div className="parking-card-info">
           <h3>{parking.name}</h3>
           {d?.address && (

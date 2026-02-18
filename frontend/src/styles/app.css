@@ -390,6 +390,16 @@ body {
   flex-shrink: 0;
 }
 
+.parking-card-indicator-triangle {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 10px solid;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
 .parking-card-info {
   flex: 1;
   min-width: 0;
