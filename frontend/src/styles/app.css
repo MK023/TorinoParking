@@ -964,7 +964,12 @@ body {
   padding-top: 4px;
 }
 
-.filter-pill-poi.active {
+.filter-pill-hospital.active {
+  background: #0891b2;
+  border-color: #0891b2;
+}
+
+.filter-pill-university.active {
   background: #8b5cf6;
   border-color: #8b5cf6;
 }

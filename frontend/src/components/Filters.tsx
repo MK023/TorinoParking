@@ -45,14 +45,14 @@ export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer
         <div className="filter-pills filter-pills-poi">
           <span className="filter-group-label">Punti di interesse</span>
           <button
-            className={`filter-pill filter-pill-poi${poiLayers?.has("hospital") ? " active" : ""}`}
+            className={`filter-pill filter-pill-hospital${poiLayers?.has("hospital") ? " active" : ""}`}
             onClick={() => onTogglePOILayer("hospital")}
           >
             <Hospital size={14} />
             Ospedali
           </button>
           <button
-            className={`filter-pill filter-pill-poi${poiLayers?.has("university") ? " active" : ""}`}
+            className={`filter-pill filter-pill-university${poiLayers?.has("university") ? " active" : ""}`}
             onClick={() => onTogglePOILayer("university")}
           >
             <GraduationCap size={14} />
