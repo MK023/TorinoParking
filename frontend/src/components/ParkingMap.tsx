@@ -44,7 +44,9 @@ interface FlyToProps {
 
 function FlyTo({ center, zoom }: FlyToProps) {
   const map = useMap();
-  map.flyTo(center, zoom, { duration: 1.2 });
+  useEffect(() => {
+    map.flyTo(center, zoom, { duration: 1.2 });
+  }, [map, center[0], center[1], zoom]);
   return null;
 }
 
@@ -52,7 +54,11 @@ function MapClickHandler({ onClick }: { onClick?: () => void }) {
   const map = useMap();
   useEffect(() => {
     if (!onClick) return;
-    const handler = () => onClick();
+    const handler = (e: L.LeafletMouseEvent) => {
+      const target = e.originalEvent.target as HTMLElement;
+      if (target?.closest('.parking-marker, .poi-marker, .leaflet-popup')) return;
+      onClick();
+    };
     map.on("click", handler);
     return () => { map.off("click", handler); };
   }, [map, onClick]);

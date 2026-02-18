@@ -67,6 +67,7 @@ export function useParkings() {
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const boostTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const nearbyBoostUntil = useRef(0);
 
   const getRefreshInterval = useCallback(() => {
@@ -102,8 +103,9 @@ export function useParkings() {
   const boostRefresh = useCallback(() => {
     nearbyBoostUntil.current = Date.now() + NEARBY_BOOST_DURATION;
     clearInterval(intervalRef.current);
+    clearTimeout(boostTimeoutRef.current);
     intervalRef.current = setInterval(fetchData, REFRESH_NEARBY);
-    setTimeout(() => {
+    boostTimeoutRef.current = setTimeout(() => {
       clearInterval(intervalRef.current);
       intervalRef.current = setInterval(fetchData, REFRESH_NORMAL);
     }, NEARBY_BOOST_DURATION);
@@ -126,6 +128,7 @@ export function useParkings() {
 
     return () => {
       clearInterval(intervalRef.current);
+      clearTimeout(boostTimeoutRef.current);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [fetchData, getRefreshInterval]);
