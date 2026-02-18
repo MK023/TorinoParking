@@ -105,6 +105,7 @@ export default function App() {
   }, []);
 
   const handleMapClick = useCallback(() => {
+    setSelectedPOI(null);
     if (isMobile) {
       bottomSheet.setSheetState("closed");
     }
