@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Parking } from "../types/parking";
@@ -45,14 +46,26 @@ function FlyTo({ center, zoom }: FlyToProps) {
   return null;
 }
 
+function MapClickHandler({ onClick }: { onClick?: () => void }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!onClick) return;
+    const handler = () => onClick();
+    map.on("click", handler);
+    return () => { map.off("click", handler); };
+  }, [map, onClick]);
+  return null;
+}
+
 interface Props {
   parkings: Parking[];
   selectedId: number | null;
   onSelect: (parking: Parking) => void;
   userPosition: [number, number] | null;
+  onMapClick?: () => void;
 }
 
-export default function ParkingMap({ parkings, selectedId, onSelect, userPosition }: Props) {
+export default function ParkingMap({ parkings, selectedId, onSelect, userPosition, onMapClick }: Props) {
   const flyTarget = userPosition || TORINO_CENTER;
   const flyZoom = userPosition ? 15 : DEFAULT_ZOOM;
 
@@ -67,6 +80,7 @@ export default function ParkingMap({ parkings, selectedId, onSelect, userPositio
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
+      <MapClickHandler onClick={onMapClick} />
 
       {userPosition && <FlyTo center={flyTarget} zoom={flyZoom} />}
 

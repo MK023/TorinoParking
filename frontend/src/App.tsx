@@ -1,15 +1,38 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Parking } from "./types/parking";
 import { useParkings } from "./hooks/useParkings";
+import { useBottomSheet } from "./hooks/useBottomSheet";
 import ParkingMap from "./components/ParkingMap";
 import Sidebar from "./components/Sidebar";
 import "./styles/app.css";
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return isMobile;
+}
 
 export default function App() {
   const { parkings, allParkings, lastUpdate, loading, error, filters, setFilters, refresh } =
     useParkings();
   const [selectedParking, setSelectedParking] = useState<Parking | null>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+
+  const isMobile = useIsMobile();
+  const bottomSheet = useBottomSheet();
+
+  useEffect(() => {
+    if (!isMobile) return;
+    if (selectedParking) {
+      bottomSheet.setSheetState("full");
+    } else {
+      bottomSheet.setSheetState("half");
+    }
+  }, [selectedParking, isMobile]);
 
   const handleLocateMe = useCallback(() => {
     if (!navigator.geolocation) {
@@ -39,6 +62,12 @@ export default function App() {
     setSelectedParking(parking);
   }, []);
 
+  const handleMapClick = useCallback(() => {
+    if (isMobile) {
+      bottomSheet.setSheetState("closed");
+    }
+  }, [isMobile, bottomSheet]);
+
   return (
     <div className="app-layout">
       <Sidebar
@@ -53,12 +82,15 @@ export default function App() {
         onSelect={handleSelect}
         onLocateMe={handleLocateMe}
         onRefresh={refresh}
+        isMobile={isMobile}
+        bottomSheet={isMobile ? bottomSheet : undefined}
       />
       <ParkingMap
         parkings={parkings}
         selectedId={selectedParking?.id ?? null}
         onSelect={(p) => handleSelect(p)}
         userPosition={userPosition}
+        onMapClick={handleMapClick}
       />
     </div>
   );
