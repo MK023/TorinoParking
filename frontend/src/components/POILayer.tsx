@@ -1,8 +1,32 @@
 import { Marker, Polyline, Popup } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import type { POI, POICategory } from "../types/poi";
 import type { Parking } from "../types/parking";
 import { haversineMeters } from "../utils/parking";
+
+function createPOIClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
+  const count = cluster.getChildCount();
+  return L.divIcon({
+    className: "poi-cluster",
+    html: `<div style="
+      background: #6366f1;
+      color: white;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    ">${count}</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+  });
+}
 
 interface Props {
   pois: POI[];
@@ -111,28 +135,35 @@ export default function POILayer({
 
   return (
     <>
-      {visiblePOIs.map((poi) => {
-        const isSelected = selectedPOI?.id === poi.id;
-        const isDimmed = selectedPOI !== null && !isSelected;
-        return (
-          <Marker
-            key={poi.id}
-            position={[poi.lat, poi.lng]}
-            icon={createPOIIcon(poi.category, isSelected, isDimmed)}
-            zIndexOffset={isSelected ? 2000 : isDimmed ? -500 : 0}
-            eventHandlers={{ click: () => onSelectPOI(poi) }}
-          >
-            <Popup>
-              <div style={{ minWidth: 160 }}>
-                <strong>{poi.name}</strong>
-                <div style={{ fontSize: 11, marginTop: 4, opacity: 0.7 }}>
-                  {poi.address}
+      <MarkerClusterGroup
+        maxClusterRadius={30}
+        spiderfyOnMaxZoom
+        showCoverageOnHover={false}
+        iconCreateFunction={createPOIClusterIcon}
+      >
+        {visiblePOIs.map((poi) => {
+          const isSelected = selectedPOI?.id === poi.id;
+          const isDimmed = selectedPOI !== null && !isSelected;
+          return (
+            <Marker
+              key={poi.id}
+              position={[poi.lat, poi.lng]}
+              icon={createPOIIcon(poi.category, isSelected, isDimmed)}
+              zIndexOffset={isSelected ? 2000 : isDimmed ? -500 : 0}
+              eventHandlers={{ click: () => onSelectPOI(poi) }}
+            >
+              <Popup>
+                <div style={{ minWidth: 160 }}>
+                  <strong>{poi.name}</strong>
+                  <div style={{ fontSize: 11, marginTop: 4, opacity: 0.7 }}>
+                    {poi.address}
+                  </div>
                 </div>
-              </div>
-            </Popup>
-          </Marker>
-        );
-      })}
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MarkerClusterGroup>
 
       {selectedPOI && nearestParkings.map((p) => (
         <Polyline

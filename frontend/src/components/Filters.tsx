@@ -72,7 +72,7 @@ export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer
                 onClick={() => onTogglePOILayer("university")}
               >
                 <GraduationCap size={14} />
-                Universita
+                Università
               </button>
             </div>
           )}

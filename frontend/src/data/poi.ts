@@ -66,7 +66,7 @@ export const poiData: POI[] = [
     lng: 7.6395,
     address: "Via Tofane 71",
   },
-  // Universita
+  // Università
   {
     id: "uni-polito-duca",
     name: "Politecnico - Corso Duca",

@@ -125,7 +125,7 @@ export default function Sidebar({
               <span className="logo-icon">P</span>
               <div>
                 <h1>Torino Parking</h1>
-                <p className="subtitle">Disponibilita in tempo reale</p>
+                <p className="subtitle">Disponibilità in tempo reale</p>
               </div>
               {onToggleTheme && (
                 <button
