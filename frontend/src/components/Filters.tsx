@@ -39,40 +39,27 @@ export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer
             {pill.label}
           </button>
         ))}
-        {onTogglePOILayer && (
-          <>
-            <span className="filter-pill-divider" />
-            <button
-              className={`filter-pill filter-pill-poi${poiLayers?.has("hospital") ? " active" : ""}`}
-              onClick={() => onTogglePOILayer("hospital")}
-            >
-              <Hospital size={14} />
-              Ospedali
-            </button>
-            <button
-              className={`filter-pill filter-pill-poi${poiLayers?.has("university") ? " active" : ""}`}
-              onClick={() => onTogglePOILayer("university")}
-            >
-              <GraduationCap size={14} />
-              Universita
-            </button>
-          </>
-        )}
       </div>
 
-      <label className="filter-range">
-        <span>Posti liberi min: {filters.minSpots}</span>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={5}
-          value={filters.minSpots}
-          onChange={(e) =>
-            onChange({ ...filters, minSpots: Number(e.target.value) })
-          }
-        />
-      </label>
+      {onTogglePOILayer && (
+        <div className="filter-pills filter-pills-poi">
+          <span className="filter-group-label">Punti di interesse</span>
+          <button
+            className={`filter-pill filter-pill-poi${poiLayers?.has("hospital") ? " active" : ""}`}
+            onClick={() => onTogglePOILayer("hospital")}
+          >
+            <Hospital size={14} />
+            Ospedali
+          </button>
+          <button
+            className={`filter-pill filter-pill-poi${poiLayers?.has("university") ? " active" : ""}`}
+            onClick={() => onTogglePOILayer("university")}
+          >
+            <GraduationCap size={14} />
+            Universita
+          </button>
+        </div>
+      )}
 
       {filters.nearbyMode && (
         <label className="filter-range">

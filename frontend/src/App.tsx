@@ -4,6 +4,7 @@ import type { POI, POICategory } from "./types/poi";
 import { poiData } from "./data/poi";
 import { useParkings } from "./hooks/useParkings";
 import { useBottomSheet } from "./hooks/useBottomSheet";
+import { useTheme } from "./hooks/useTheme";
 import ParkingMap from "./components/ParkingMap";
 import Sidebar from "./components/Sidebar";
 import "./styles/app.css";
@@ -31,6 +32,7 @@ export default function App() {
 
   const isMobile = useIsMobile();
   const bottomSheet = useBottomSheet();
+  const { theme, toggleTheme } = useTheme();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar-collapsed") === "true";
@@ -128,6 +130,8 @@ export default function App() {
         onTogglePOILayer={togglePOILayer}
         selectedPOI={selectedPOI}
         onSelectPOI={handleSelectPOI}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
       <ParkingMap
         parkings={parkings}
@@ -139,6 +143,7 @@ export default function App() {
         activePOILayers={poiLayers}
         selectedPOI={selectedPOI}
         onSelectPOI={handleSelectPOI}
+        theme={theme}
       />
     </div>
   );

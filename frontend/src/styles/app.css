@@ -8,6 +8,11 @@
 }
 
 :root {
+  --radius: 10px;
+  --sidebar-width: 380px;
+}
+
+[data-theme="dark"] {
   --bg-primary: #0f1117;
   --bg-secondary: #1a1d27;
   --bg-card: #222633;
@@ -20,8 +25,21 @@
   --green: #22c55e;
   --amber: #f59e0b;
   --red: #ef4444;
-  --radius: 10px;
-  --sidebar-width: 380px;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f5f6f8;
+  --bg-secondary: #ffffff;
+  --bg-card: #f0f2f5;
+  --bg-hover: #e4e7eb;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --border: #e5e7eb;
+  --accent: #3b82f6;
+  --green: #16a34a;
+  --amber: #d97706;
+  --red: #dc2626;
 }
 
 body {
@@ -932,18 +950,58 @@ body {
   border: none !important;
 }
 
-/* === POI === */
-.filter-pill-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border);
-  align-self: center;
-  margin: 0 2px;
+/* === Filter Groups === */
+.filter-group-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  width: 100%;
+}
+
+.filter-pills-poi {
+  padding-top: 4px;
 }
 
 .filter-pill-poi.active {
   background: #8b5cf6;
   border-color: #8b5cf6;
+}
+
+/* === Theme Toggle === */
+.theme-toggle {
+  margin-left: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+/* === Light theme overrides === */
+[data-theme="light"] .sidebar-mobile {
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .parking-marker div,
+[data-theme="light"] .poi-marker div {
+  border-color: #374151 !important;
+}
+
+[data-theme="light"] .leaflet-popup-close-button {
+  color: var(--text-muted) !important;
 }
 
 .poi-nearby-section {

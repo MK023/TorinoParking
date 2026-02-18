@@ -14,8 +14,9 @@ interface Props {
 
 function createPOIIcon(category: POICategory): L.DivIcon {
   const isHospital = category === "hospital";
-  const bg = isHospital ? "#dc2626" : "#8b5cf6";
-  const symbol = isHospital ? "+" : "U";
+  const bg = isHospital ? "#0891b2" : "#8b5cf6";
+  const symbol = isHospital ? "H" : "U";
+  const radius = isHospital ? "6px" : "50%";
 
   return L.divIcon({
     className: "poi-marker",
@@ -23,13 +24,13 @@ function createPOIIcon(category: POICategory): L.DivIcon {
       <div style="
         background: ${bg};
         color: white;
-        border-radius: 50%;
+        border-radius: ${radius};
         width: 28px;
         height: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 800;
         border: 2px solid white;
         box-shadow: 0 2px 6px rgba(0,0,0,0.35);
@@ -91,9 +92,8 @@ export default function POILayer({
           ]}
           pathOptions={{
             color: "#3b82f6",
-            weight: 2,
-            dashArray: "6 4",
-            opacity: 0.7,
+            weight: 1.5,
+            opacity: 0.45,
           }}
         />
       ))}

@@ -9,7 +9,8 @@ import Filters from "./Filters";
 import NearestParkingBanner from "./NearestParkingBanner";
 import { getNearestParkings } from "./POILayer";
 import { formatDistance } from "../utils/parking";
-import { Search, Crosshair, Refresh, ChevronLeft, ChevronRight } from "./Icons";
+import type { Theme } from "../hooks/useTheme";
+import { Search, Crosshair, Refresh, ChevronLeft, ChevronRight, Sun, Moon } from "./Icons";
 
 interface Props {
   parkings: Parking[];
@@ -31,6 +32,8 @@ interface Props {
   onTogglePOILayer?: (category: POICategory) => void;
   selectedPOI?: POI | null;
   onSelectPOI?: (poi: POI | null) => void;
+  theme?: Theme;
+  onToggleTheme?: () => void;
 }
 
 export default function Sidebar({
@@ -53,6 +56,8 @@ export default function Sidebar({
   onTogglePOILayer,
   selectedPOI,
   onSelectPOI,
+  theme,
+  onToggleTheme,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -107,6 +112,15 @@ export default function Sidebar({
                 <h1>Torino Parking</h1>
                 <p className="subtitle">Disponibilita in tempo reale</p>
               </div>
+              {onToggleTheme && (
+                <button
+                  className="theme-toggle"
+                  onClick={onToggleTheme}
+                  title={theme === "dark" ? "Tema chiaro" : "Tema scuro"}
+                >
+                  {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              )}
             </div>
             <div className="stats-row">
               <div className="stat">

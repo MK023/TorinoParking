@@ -3,14 +3,20 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Parking } from "../types/parking";
 import type { POI, POICategory } from "../types/poi";
+import type { Theme } from "../hooks/useTheme";
 import { getStatusColor, getTendenceInfo } from "../utils/parking";
-import POILayer from "./POILayer";
+import POILayer, { getNearestParkings } from "./POILayer";
 import "leaflet/dist/leaflet.css";
+
+const TILE_URLS: Record<Theme, string> = {
+  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+};
 
 const TORINO_CENTER: [number, number] = [45.0703, 7.6869];
 const DEFAULT_ZOOM = 13;
 
-function createIcon(parking: Parking): L.DivIcon {
+function createIcon(parking: Parking, dimmed = false): L.DivIcon {
   const color = getStatusColor(parking);
   const spots = parking.free_spots !== null ? parking.free_spots : "\u2014";
   return L.divIcon({
@@ -28,7 +34,9 @@ function createIcon(parking: Parking): L.DivIcon {
         font-size: 11px;
         font-weight: 700;
         border: 2px solid white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        box-shadow: 0 2px 6px rgba(0,0,0,${dimmed ? "0.1" : "0.35"});
+        opacity: ${dimmed ? 0.25 : 1};
+        transition: opacity 0.3s ease;
       ">${spots}</div>
     `,
     iconSize: [36, 36],
@@ -75,11 +83,16 @@ interface Props {
   activePOILayers?: Set<POICategory>;
   selectedPOI?: POI | null;
   onSelectPOI?: (poi: POI | null) => void;
+  theme?: Theme;
 }
 
-export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect, userPosition, onMapClick, pois, activePOILayers, selectedPOI, onSelectPOI }: Props) {
+export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect, userPosition, onMapClick, pois, activePOILayers, selectedPOI, onSelectPOI, theme = "dark" }: Props) {
   const flyTarget = userPosition || TORINO_CENTER;
   const flyZoom = userPosition ? 15 : DEFAULT_ZOOM;
+
+  const highlightedIds = selectedPOI
+    ? new Set(getNearestParkings(selectedPOI, parkings).map((p) => p.id))
+    : null;
 
   return (
     <MapContainer
@@ -89,8 +102,9 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
       zoomControl={false}
     >
       <TileLayer
+        key={theme}
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url={TILE_URLS[theme]}
       />
       <MapClickHandler onClick={onMapClick} />
 
@@ -116,11 +130,14 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
 
       {parkings.map((p) => {
         const tendence = getTendenceInfo(p.tendence, p);
+        const dimmed = highlightedIds !== null && !highlightedIds.has(p.id);
+        const zOffset = highlightedIds === null ? 0 : dimmed ? -1000 : 1000;
         return (
           <Marker
             key={p.id}
             position={[p.lat, p.lng]}
-            icon={createIcon(p)}
+            icon={createIcon(p, dimmed)}
+            zIndexOffset={zOffset}
             eventHandlers={{ click: () => onSelect(p) }}
           >
             <Popup>
@@ -143,7 +160,7 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
                 {p.occupancy_percentage !== null && (
                   <div style={{
                     height: 6,
-                    background: "#374151",
+                    background: "var(--border)",
                     borderRadius: 3,
                     overflow: "hidden",
                     marginTop: 4,
