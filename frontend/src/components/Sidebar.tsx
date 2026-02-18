@@ -6,7 +6,7 @@ import ParkingCard from "./ParkingCard";
 import ParkingDetail from "./ParkingDetail";
 import Filters from "./Filters";
 import NearestParkingBanner from "./NearestParkingBanner";
-import { Search, Crosshair, Refresh } from "./Icons";
+import { Search, Crosshair, Refresh, ChevronLeft, ChevronRight } from "./Icons";
 
 interface Props {
   parkings: Parking[];
@@ -22,6 +22,8 @@ interface Props {
   onRefresh: () => void;
   isMobile: boolean;
   bottomSheet?: UseBottomSheetReturn;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export default function Sidebar({
@@ -38,6 +40,8 @@ export default function Sidebar({
   onRefresh,
   isMobile,
   bottomSheet,
+  collapsed,
+  onToggleCollapse,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -59,21 +63,31 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`sidebar${isMobile ? " sidebar-mobile" : ""}`}
+      className={`sidebar${collapsed ? " collapsed" : ""}${isMobile ? " sidebar-mobile" : ""}`}
       style={mobileStyle}
       {...(isMobile && bottomSheet ? bottomSheet.handlers : {})}
     >
+      {!isMobile && (
+        <button className="sidebar-collapse-btn" onClick={onToggleCollapse} title={collapsed ? "Espandi sidebar" : "Comprimi sidebar"}>
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
+      )}
+
       {isMobile && <div className="drag-handle" />}
 
-      {isMobile && bottomSheet?.sheetState === "closed" && (
+      {collapsed ? (
+        <div className="sidebar-collapsed-icons">
+          <span className="logo-icon">P</span>
+          <span className="collapsed-stat">{availableCount}</span>
+          <span className="collapsed-stat-label">aperti</span>
+        </div>
+      ) : isMobile && bottomSheet?.sheetState === "closed" ? (
         <div className="sheet-collapsed-stats">
           <span>{availableCount} aperti</span>
           <span className="sheet-collapsed-dot">&middot;</span>
           <span>{totalSpots.toLocaleString()} posti liberi</span>
         </div>
-      )}
-
-      {(!isMobile || bottomSheet?.sheetState !== "closed") && (
+      ) : (
         <>
           <header className="sidebar-header">
             <div className="logo">

@@ -25,6 +25,18 @@ export default function App() {
   const isMobile = useIsMobile();
   const bottomSheet = useBottomSheet();
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem("sidebar-collapsed") === "true";
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", String(next));
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     if (!isMobile) return;
     if (selectedParking) {
@@ -84,6 +96,8 @@ export default function App() {
         onRefresh={refresh}
         isMobile={isMobile}
         bottomSheet={isMobile ? bottomSheet : undefined}
+        collapsed={!isMobile && sidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
       />
       <ParkingMap
         parkings={parkings}

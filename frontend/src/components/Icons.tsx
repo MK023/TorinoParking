@@ -143,6 +143,14 @@ export function ChevronLeft(p: IconProps) {
   );
 }
 
+export function ChevronRight(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="m9 18 6-6-6-6" />
+    </Svg>
+  );
+}
+
 export function Search(p: IconProps) {
   return (
     <Svg {...p}>

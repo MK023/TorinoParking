@@ -87,6 +87,8 @@ body {
   border-right: 1px solid var(--border);
   z-index: 10;
   overflow: hidden;
+  position: relative;
+  transition: width 300ms ease;
 }
 
 .sidebar-header {
@@ -864,6 +866,66 @@ body {
   color: var(--text-muted);
 }
 
+/* === Collapsible Sidebar (Desktop) === */
+.sidebar.collapsed {
+  width: 48px;
+}
+
+.sidebar.collapsed .sidebar-header,
+.sidebar.collapsed .sidebar-controls,
+.sidebar.collapsed .parking-list,
+.sidebar.collapsed .sidebar-footer,
+.sidebar.collapsed .nearest-banner,
+.sidebar.collapsed .detail-panel {
+  display: none;
+}
+
+.sidebar-collapse-btn {
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 15;
+  transition: all 0.15s;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.sidebar-collapsed-icons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+.collapsed-stat {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.collapsed-stat-label {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* === Mobile Responsive - Bottom Sheet === */
 @media (max-width: 768px) {
   .app-layout {
@@ -924,6 +986,10 @@ body {
 
   .sheet-collapsed-dot {
     color: var(--text-muted);
+  }
+
+  .sidebar-collapse-btn {
+    display: none;
   }
 
   .sidebar-header {
