@@ -10,6 +10,7 @@ import NearestParkingBanner from "./NearestParkingBanner";
 import { getNearestParkings } from "./POILayer";
 import { formatDistance } from "../utils/parking";
 import type { Theme } from "../hooks/useTheme";
+import type { Weather } from "../hooks/useWeather";
 import { Search, Crosshair, Refresh, ChevronLeft, ChevronRight, Sun, Moon } from "./Icons";
 
 interface Props {
@@ -34,6 +35,7 @@ interface Props {
   onSelectPOI?: (poi: POI | null) => void;
   theme?: Theme;
   onToggleTheme?: () => void;
+  weather?: Weather | null;
 }
 
 export default function Sidebar({
@@ -58,6 +60,7 @@ export default function Sidebar({
   onSelectPOI,
   theme,
   onToggleTheme,
+  weather,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -96,12 +99,24 @@ export default function Sidebar({
           <span className="logo-icon">P</span>
           <span className="collapsed-stat">{availableCount}</span>
           <span className="collapsed-stat-label">aperti</span>
+          {weather && (
+            <>
+              <span className="collapsed-weather-icon">{weather.icon}</span>
+              <span className="collapsed-weather-temp">{weather.temperature}°</span>
+            </>
+          )}
         </div>
       ) : isMobile && bottomSheet?.sheetState === "closed" ? (
         <div className="sheet-collapsed-stats">
           <span>{availableCount} aperti</span>
           <span className="sheet-collapsed-dot">&middot;</span>
           <span>{totalSpots.toLocaleString()} posti liberi</span>
+          {weather && (
+            <>
+              <span className="sheet-collapsed-dot">&middot;</span>
+              <span className="sheet-weather">{weather.icon} {weather.temperature}°</span>
+            </>
+          )}
         </div>
       ) : (
         <>

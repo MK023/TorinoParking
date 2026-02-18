@@ -35,8 +35,8 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Pannello dettaglio con info GTT (tariffe, pagamenti, bus, metro)
 - [x] Grafico storico disponibilita' (ultime 6 ore)
 - [x] Auto-refresh ogni 2 minuti
-- [x] Filtri: solo disponibili, posti minimi, raggio ricerca
-- [x] Filtri avanzati pill-toggle: disabili, pagamento elettronico, coperto, metro
+- [x] Filtri pill-toggle: disponibili, disabili, pagamento elettronico, coperto, metro
+- [x] Filtri POI separati con label "Punti di interesse" e colori dedicati
 - [x] Ricerca parcheggi per nome
 - [x] Design responsive (mobile + desktop)
 - [x] Mobile bottom-sheet con drag handle e touch target 44px
@@ -46,6 +46,9 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Banner "parcheggio piu vicino" con navigatore nativo
 - [x] Bottone "Naviga" con deep link Apple Maps / Google Maps
 - [x] Docker container con hot reload
+- [x] Tema chiaro/scuro con rilevamento preferenza sistema + toggle manuale
+- [x] Tile mappa dinamiche (CartoDB dark/light) con switch istantaneo
+- [x] Meteo attuale Torino (OpenMeteo) nella barra collassata
 
 ---
 
@@ -93,7 +96,47 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Modello dati POI con categoria, nome, coordinate, indirizzo (frontend JSON statico)
 - [ ] Endpoint `GET /api/v1/poi?category=hospital&lat=&lng=&radius=` (futuro: migrazione a backend)
 - [x] Sistema layer sulla mappa con toggle per categoria
-- [x] Routing: "trova parcheggio vicino a [POI]" con linee tratteggiate e lista 3 piu vicini
+- [x] Routing: "trova parcheggio vicino a [POI]" con linee solide e lista 3 piu vicini
+- [x] Marker POI con forme uniche: ospedali = quadrato arrotondato teal, universita = diamante viola
+- [x] Selezione POI con ingrandimento, glow e dimming marker non collegati
+- [x] Z-index gerarchico: POI selezionato > parcheggi collegati > normali > dimmed
+
+### POI personalizzati dagli utenti (futuro)
+- [ ] Utenti possono segnare parcheggi preferiti
+- [ ] Navigazione diretta al parcheggio preferito
+- [ ] Richiede autenticazione utente e storage preferiti lato backend
+
+---
+
+## Meteo e Informazioni Contestuali
+
+### Meteo in-app
+- [x] Integrazione OpenMeteo API (gratis, no API key) per condizioni attuali Torino
+- [x] Temperatura e icona meteo nella barra collassata (desktop + mobile)
+- [ ] Previsioni orarie per pianificare parcheggio coperto vs scoperto
+- [ ] Integrazione meteo come feature ML per previsione affluenza
+
+### Informazioni nella barra collassata
+- [x] Meteo attuale (temperatura + condizioni)
+- [ ] Traffico in tempo reale (integrazione Google Traffic o TomTom)
+- [ ] Notifiche: eventi in citta che impattano parcheggi
+- [ ] Tendenza generale: citta si sta riempiendo / svuotando
+
+---
+
+## Mappa Nativa (post-MVP)
+
+### Mappe native per mobile
+- [ ] Apple Maps su iOS (MapKit JS o app nativa Swift)
+- [ ] Google Maps su Android (Maps SDK)
+- [ ] Transizione da Leaflet/CartoDB a mappe native per UX premium
+- [ ] Richiede passaggio a React Native / Capacitor o app nativa
+
+### Interattivita mappa avanzata
+- [ ] Clustering marker per zoom out
+- [ ] Animazioni fluide marker (aggiornamento posti in tempo reale)
+- [ ] 3D buildings su zoom elevato (dove supportato)
+- [ ] Street View integrato per orientarsi all'arrivo
 
 ---
 
@@ -251,14 +294,44 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 
 ---
 
-## Qualita del Codice
+## Qualita del Codice — CI Pipeline Post-MVP
 
-- [ ] mypy strict mode su tutto il codebase
-- [ ] Mutation testing (mutmut) per validare efficacia dei test
-- [ ] Load testing con Locust: profilo di carico realistico
-- [ ] Pre-commit hooks: ruff + mypy + test unitari
+### Lint e analisi statica
+- [ ] ESLint strict + Prettier per frontend (no warning tollerati)
+- [ ] Ruff lint + format per backend Python
+- [ ] mypy strict mode su tutto il backend
+- [ ] Rimozione codice morto e import inutili (treeshake audit)
+- [ ] TypeScript strict: `noUnusedLocals`, `noUnusedParameters`
+
+### Testing e coverage
+- [ ] Test critici frontend: hook useParkings, useWeather, useBottomSheet
+- [ ] Test componenti: Sidebar collapsed states, Filters, ParkingCard
+- [ ] Coverage target backend: 90%+ (attualmente 80%)
+- [ ] Coverage target frontend: 70%+ (attualmente 0%)
+- [ ] Mutation testing (mutmut) per validare efficacia test backend
 - [ ] API contract testing con Schemathesis
-- [ ] Coverage target: 90%+ (attualmente 80%)
+
+### CI dedicata (GitHub Actions)
+- [ ] Pipeline: lint → type-check → test → build → audit
+- [ ] Controllo tipi TypeScript (`tsc --noEmit`) in CI
+- [ ] Controllo tipi Python (`mypy --strict`) in CI
+- [ ] Bundle size check (alert se supera soglia)
+- [ ] Lighthouse CI per performance frontend
+- [ ] Pre-commit hooks: ruff + mypy + eslint + test unitari
+
+### Sicurezza e audit
+- [ ] `npm audit` / `pip audit` in CI
+- [ ] Dependency scanning automatico (Dependabot o Snyk)
+- [ ] Audit connessioni DB: connection pool, timeout, leak detection
+- [ ] OWASP ZAP scan periodico su endpoint pubblici
+- [ ] Secret scanning in CI (no credenziali committate)
+
+### Ottimizzazione e performance
+- [ ] Snellire bundle frontend (analisi con `vite-bundle-visualizer`)
+- [ ] Lazy loading componenti pesanti (ParkingDetail, grafico storico)
+- [ ] Ottimizzare re-render React (memo, useMemo dove necessario)
+- [ ] Payload API "light" per consultazione rapida (~1 KB vs ~15 KB)
+- [ ] Load testing con Locust: profilo di carico realistico
 - [ ] Documentazione API OpenAPI completa con esempi per ogni endpoint
 
 ---
