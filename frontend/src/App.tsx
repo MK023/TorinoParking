@@ -17,7 +17,7 @@ function useIsMobile() {
 }
 
 export default function App() {
-  const { parkings, allParkings, lastUpdate, loading, error, filters, setFilters, refresh } =
+  const { parkings, allParkings, lastUpdate, loading, error, filters, setFilters, refresh, boostRefresh } =
     useParkings();
   const [selectedParking, setSelectedParking] = useState<Parking | null>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
@@ -62,13 +62,14 @@ export default function App() {
           userLat: lat,
           userLng: lng,
         }));
+        boostRefresh();
       },
       () => {
         alert("Impossibile ottenere la posizione. Controlla i permessi.");
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  }, [setFilters]);
+  }, [setFilters, boostRefresh]);
 
   const handleSelect = useCallback((parking: Parking | null) => {
     setSelectedParking(parking);

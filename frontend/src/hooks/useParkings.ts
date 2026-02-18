@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Parking, ParkingListResponse } from "../types/parking";
 import { getNearbyParkings, getParkings } from "../services/api";
 
-const REFRESH_INTERVAL = 120_000; // 2 minutes
+const REFRESH_NORMAL = 120_000;          // 2 minutes
+const REFRESH_NEARBY = 30_000;           // 30 seconds
+const NEARBY_BOOST_DURATION = 300_000;   // 5 minutes
 
 export interface Filters {
   onlyAvailable: boolean;
@@ -64,7 +66,13 @@ export function useParkings() {
     metroAccess: false,
   });
 
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const nearbyBoostUntil = useRef(0);
+
+  const getRefreshInterval = useCallback(() => {
+    if (Date.now() < nearbyBoostUntil.current) return REFRESH_NEARBY;
+    return REFRESH_NORMAL;
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -91,13 +99,36 @@ export function useParkings() {
     }
   }, [filters.nearbyMode, filters.userLat, filters.userLng, filters.radius]);
 
+  const boostRefresh = useCallback(() => {
+    nearbyBoostUntil.current = Date.now() + NEARBY_BOOST_DURATION;
+    clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(fetchData, REFRESH_NEARBY);
+    setTimeout(() => {
+      clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(fetchData, REFRESH_NORMAL);
+    }, NEARBY_BOOST_DURATION);
+  }, [fetchData]);
+
   useEffect(() => {
     setLoading(true);
     fetchData();
+    intervalRef.current = setInterval(fetchData, getRefreshInterval());
 
-    intervalRef.current = setInterval(fetchData, REFRESH_INTERVAL);
-    return () => clearInterval(intervalRef.current);
-  }, [fetchData]);
+    const onVisibility = () => {
+      if (document.hidden) {
+        clearInterval(intervalRef.current);
+      } else {
+        fetchData();
+        intervalRef.current = setInterval(fetchData, getRefreshInterval());
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [fetchData, getRefreshInterval]);
 
   const parkings = allParkings.filter((p) => matchesClientFilters(p, filters));
 
@@ -110,5 +141,6 @@ export function useParkings() {
     filters,
     setFilters,
     refresh: fetchData,
+    boostRefresh,
   };
 }
