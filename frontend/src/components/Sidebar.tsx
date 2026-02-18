@@ -151,6 +151,14 @@ export default function Sidebar({
                 <span className="stat-label">posti liberi</span>
               </div>
             </div>
+            {weather && (
+              <div className="weather-bar">
+                <span className="weather-icon">{weather.icon}</span>
+                <span className="weather-temp">{weather.temperature}°C</span>
+                <span className="weather-label">{weather.label}</span>
+                <span className="weather-city">Torino</span>
+              </div>
+            )}
           </header>
 
           {selectedParking ? (

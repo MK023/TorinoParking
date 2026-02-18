@@ -959,6 +959,39 @@ body {
   font-weight: 600;
 }
 
+.weather-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.weather-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.weather-temp {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.weather-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.weather-city {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* === POI Markers === */
 .poi-marker {
   background: none !important;

@@ -7,7 +7,7 @@ export function getStatusColor(parking: Parking): string {
     return "#6b7280"; // chiuso (fuori orario)
   }
   if (parking.occupancy_percentage === null) return "#6b7280";
-  if (parking.occupancy_percentage >= 90) return "#ef4444";
+  if (parking.occupancy_percentage >= 90) return "#ea580c";
   if (parking.occupancy_percentage >= 70) return "#f59e0b";
   return "#22c55e";
 }
