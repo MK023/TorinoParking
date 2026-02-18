@@ -237,3 +237,11 @@ export function GraduationCap(p: IconProps) {
     </Svg>
   );
 }
+
+export function ChevronDown(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="m6 9 6 6 6-6" />
+    </Svg>
+  );
+}

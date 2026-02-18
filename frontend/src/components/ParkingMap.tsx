@@ -14,11 +14,52 @@ const TILE_URLS: Record<Theme, string> = {
 };
 
 const TORINO_CENTER: [number, number] = [45.0703, 7.6869];
-const DEFAULT_ZOOM = 13;
+const DEFAULT_ZOOM = 14;
+
+// Limiti mappa: solo Torino città, niente comuni limitrofi
+const TORINO_BOUNDS: L.LatLngBoundsExpression = [
+  [45.005, 7.58],  // sud-ovest
+  [45.14, 7.78],   // nord-est
+];
 
 function createIcon(parking: Parking, dimmed = false): L.DivIcon {
   const color = getStatusColor(parking);
   const spots = parking.free_spots !== null ? parking.free_spots : "\u2014";
+  const nearlyFull = parking.is_available && parking.occupancy_percentage !== null && parking.occupancy_percentage >= 90;
+
+  if (nearlyFull) {
+    // Triangolo rovesciato per parcheggi quasi esauriti
+    return L.divIcon({
+      className: "parking-marker",
+      html: `
+        <div style="
+          width: 0; height: 0;
+          border-left: 20px solid transparent;
+          border-right: 20px solid transparent;
+          border-top: 34px solid ${color};
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,${dimmed ? "0.1" : "0.4"}));
+          opacity: ${dimmed ? 0.25 : 1};
+          transition: opacity 0.3s ease;
+          position: relative;
+        ">
+          <span style="
+            position: absolute;
+            top: -32px;
+            left: -8px;
+            width: 16px;
+            text-align: center;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+          ">${spots}</span>
+        </div>
+      `,
+      iconSize: [40, 34],
+      iconAnchor: [20, 4],
+      popupAnchor: [0, -2],
+    });
+  }
+
   return L.divIcon({
     className: "parking-marker",
     html: `
@@ -100,6 +141,10 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
       zoom={DEFAULT_ZOOM}
       className="parking-map"
       zoomControl={false}
+      maxBounds={TORINO_BOUNDS}
+      maxBoundsViscosity={1.0}
+      minZoom={12}
+      maxZoom={18}
     >
       <TileLayer
         key={theme}

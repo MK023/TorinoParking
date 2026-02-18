@@ -1,6 +1,7 @@
+import { useState } from "react";
 import type { Filters as FilterState } from "../hooks/useParkings";
 import type { POICategory } from "../types/poi";
-import { Accessibility, CreditCard, Roof, Train, Hospital, GraduationCap } from "./Icons";
+import { Accessibility, CreditCard, Roof, Train, Hospital, GraduationCap, ChevronDown } from "./Icons";
 
 interface Props {
   filters: FilterState;
@@ -24,41 +25,58 @@ const pills: PillDef[] = [
 ];
 
 export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer }: Props) {
+  const [expanded, setExpanded] = useState(true);
+
+  const activeCount = pills.filter((p) => filters[p.key]).length
+    + (poiLayers?.size ?? 0);
+
   return (
     <div className="filters">
-      <div className="filter-pills">
-        {pills.map((pill) => (
-          <button
-            key={pill.key}
-            className={`filter-pill${filters[pill.key] ? " active" : ""}`}
-            onClick={() =>
-              onChange({ ...filters, [pill.key]: !filters[pill.key] })
-            }
-          >
-            {pill.icon}
-            {pill.label}
-          </button>
-        ))}
-      </div>
+      <button
+        className="filters-toggle"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <span>Filtri{activeCount > 0 ? ` (${activeCount})` : ""}</span>
+        <ChevronDown size={14} className={`filters-toggle-icon${expanded ? " expanded" : ""}`} />
+      </button>
 
-      {onTogglePOILayer && (
-        <div className="filter-pills filter-pills-poi">
-          <span className="filter-group-label">Punti di interesse</span>
-          <button
-            className={`filter-pill filter-pill-hospital${poiLayers?.has("hospital") ? " active" : ""}`}
-            onClick={() => onTogglePOILayer("hospital")}
-          >
-            <Hospital size={14} />
-            Ospedali
-          </button>
-          <button
-            className={`filter-pill filter-pill-university${poiLayers?.has("university") ? " active" : ""}`}
-            onClick={() => onTogglePOILayer("university")}
-          >
-            <GraduationCap size={14} />
-            Universita
-          </button>
-        </div>
+      {expanded && (
+        <>
+          <div className="filter-pills">
+            {pills.map((pill) => (
+              <button
+                key={pill.key}
+                className={`filter-pill${filters[pill.key] ? " active" : ""}`}
+                onClick={() =>
+                  onChange({ ...filters, [pill.key]: !filters[pill.key] })
+                }
+              >
+                {pill.icon}
+                {pill.label}
+              </button>
+            ))}
+          </div>
+
+          {onTogglePOILayer && (
+            <div className="filter-pills filter-pills-poi">
+              <span className="filter-group-label">Punti di interesse</span>
+              <button
+                className={`filter-pill filter-pill-hospital${poiLayers?.has("hospital") ? " active" : ""}`}
+                onClick={() => onTogglePOILayer("hospital")}
+              >
+                <Hospital size={14} />
+                Ospedali
+              </button>
+              <button
+                className={`filter-pill filter-pill-university${poiLayers?.has("university") ? " active" : ""}`}
+                onClick={() => onTogglePOILayer("university")}
+              >
+                <GraduationCap size={14} />
+                Universita
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {filters.nearbyMode && (

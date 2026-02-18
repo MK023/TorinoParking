@@ -51,7 +51,7 @@ function aggregateByHour(snapshots: Snapshot[]): HourBucket[] {
 }
 
 function getBarColor(pct: number): string {
-  if (pct >= 90) return "#ef4444";
+  if (pct >= 90) return "#ec4899";
   if (pct >= 70) return "#f59e0b";
   return "#22c55e";
 }
@@ -147,6 +147,12 @@ export default function ParkingDetail({ parking, onBack }: Props) {
         </div>
       )}
 
+      {parking.is_available && parking.occupancy_percentage !== null && parking.occupancy_percentage >= 90 && (
+        <div className="detail-alert-nearly-full">
+          Quasi esaurito — pochi posti rimasti!
+        </div>
+      )}
+
       {/* 3. Navigate button */}
       {parking.lat && parking.lng && (
         <a
@@ -162,7 +168,7 @@ export default function ParkingDetail({ parking, onBack }: Props) {
 
       {d ? (
         <div className="detail-info-grid">
-          {/* 4. Location */}
+          {/* 4. Location + operator + floors */}
           {(d.address || d.district) && (
             <div className="detail-row">
               <span className="detail-icon"><MapPin size={16} /></span>
@@ -177,6 +183,21 @@ export default function ParkingDetail({ parking, onBack }: Props) {
             </div>
           )}
 
+          {(d.operator || d.floors) && (
+            <div className="detail-quick-info">
+              {d.operator && (
+                <span className="detail-quick-tag">
+                  <Shield size={12} /> {d.operator}
+                </span>
+              )}
+              {d.floors !== null && d.floors > 0 && (
+                <span className="detail-quick-tag">
+                  <Roof size={12} /> {d.floors} {d.floors === 1 ? "piano" : "piani"}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* 5. Rates grid */}
           {hasRates && (
             <div className="detail-section">
@@ -186,7 +207,7 @@ export default function ParkingDetail({ parking, onBack }: Props) {
                   <div className="rate-cell">
                     <Euro size={14} />
                     <div>
-                      <span className="rate-value">{d.hourly_rate_daytime.toFixed(2)}/h</span>
+                      <span className="rate-value">&euro;{d.hourly_rate_daytime.toFixed(2)}/h</span>
                       <span className="rate-label">Giorno</span>
                     </div>
                   </div>
@@ -195,7 +216,7 @@ export default function ParkingDetail({ parking, onBack }: Props) {
                   <div className="rate-cell">
                     <Moon size={14} />
                     <div>
-                      <span className="rate-value">{d.hourly_rate_nighttime.toFixed(2)}/h</span>
+                      <span className="rate-value">&euro;{d.hourly_rate_nighttime.toFixed(2)}/h</span>
                       <span className="rate-label">Notte</span>
                     </div>
                   </div>
@@ -204,7 +225,7 @@ export default function ParkingDetail({ parking, onBack }: Props) {
                   <div className="rate-cell">
                     <Calendar size={14} />
                     <div>
-                      <span className="rate-value">{d.daily_rate.toFixed(2)}</span>
+                      <span className="rate-value">&euro;{d.daily_rate.toFixed(2)}</span>
                       <span className="rate-label">Giornaliera</span>
                     </div>
                   </div>
@@ -213,7 +234,7 @@ export default function ParkingDetail({ parking, onBack }: Props) {
                   <div className="rate-cell">
                     <Calendar size={14} />
                     <div>
-                      <span className="rate-value">{d.monthly_subscription.toFixed(2)}</span>
+                      <span className="rate-value">&euro;{d.monthly_subscription.toFixed(2)}</span>
                       <span className="rate-label">Mensile</span>
                     </div>
                   </div>

@@ -253,6 +253,34 @@ body {
   gap: 8px;
 }
 
+.filters-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.filters-toggle:hover {
+  color: var(--text-primary);
+}
+
+.filters-toggle-icon {
+  transition: transform 0.2s;
+}
+
+.filters-toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
 .filter-pills {
   display: flex;
   flex-wrap: wrap;
@@ -437,6 +465,34 @@ body {
   margin-left: auto;
 }
 
+.parking-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.card-tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.card-tag-price {
+  color: var(--green);
+  border-color: var(--green);
+  font-weight: 600;
+}
+
+.card-tag-metro {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* === Detail Panel === */
 .detail-panel {
   flex: 1;
@@ -522,6 +578,18 @@ body {
   top: -18px;
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.detail-alert-nearly-full {
+  background: rgba(236, 72, 153, 0.15);
+  border: 1px solid #ec4899;
+  color: #ec4899;
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 12px;
 }
 
 /* === Navigate Button === */
@@ -687,6 +755,24 @@ body {
   background: var(--bg-card);
   border-radius: 8px;
   border-left: 3px solid var(--amber);
+}
+
+.detail-quick-info {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-quick-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .detail-no-data {

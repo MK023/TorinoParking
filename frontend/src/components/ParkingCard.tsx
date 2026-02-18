@@ -9,6 +9,7 @@ interface Props {
 export default function ParkingCard({ parking, onClick }: Props) {
   const color = getStatusColor(parking);
   const tendence = getTendenceInfo(parking.tendence, parking);
+  const d = parking.detail;
 
   return (
     <div className="parking-card" onClick={onClick}>
@@ -16,8 +17,8 @@ export default function ParkingCard({ parking, onClick }: Props) {
         <div className="parking-card-indicator" style={{ background: color }} />
         <div className="parking-card-info">
           <h3>{parking.name}</h3>
-          {parking.detail?.address && (
-            <p className="parking-card-address">{parking.detail.address}</p>
+          {d?.address && (
+            <p className="parking-card-address">{d.address}</p>
           )}
         </div>
         <div className="parking-card-spots">
@@ -53,10 +54,24 @@ export default function ParkingCard({ parking, onClick }: Props) {
             {tendence.icon} {tendence.text}
           </span>
         )}
-        {parking.detail && (
+        {d && (
           <span className="has-detail-badge">GTT</span>
         )}
       </div>
+
+      {d && (
+        <div className="parking-card-tags">
+          {d.hourly_rate_daytime !== null && (
+            <span className="card-tag card-tag-price">&euro;{d.hourly_rate_daytime.toFixed(2)}/h</span>
+          )}
+          {d.is_covered && <span className="card-tag">Coperto</span>}
+          {d.open_24h && <span className="card-tag">24h</span>}
+          {d.has_metro_access && <span className="card-tag card-tag-metro">Metro</span>}
+          {d.disabled_spots !== null && d.disabled_spots > 0 && (
+            <span className="card-tag">{d.disabled_spots} disabili</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
