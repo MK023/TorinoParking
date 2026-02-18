@@ -52,48 +52,48 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 ## Prossimi passi — Frontend UX
 
 ### Sidebar collassabile e mappa interattiva
-- [ ] Sidebar chiudibile con toggle (freccia o hamburger) per mappa full-screen
-- [ ] Interazione diretta con marker sulla mappa (i dati real-time sono gia visibili)
-- [ ] Animazione fluida apertura/chiusura sidebar (CSS transform, no reflow)
-- [ ] Stato sidebar persistente (localStorage) tra sessioni
-- [ ] Su mobile: bottom-sheet con 3 stati (chiuso, meta, pieno) via touch drag
-- [ ] Floating action button sulla mappa per riaprire sidebar
-- [ ] Mini-badge flottante con stats (parcheggi aperti / posti liberi) visibile a sidebar chiusa
+- [x] Sidebar chiudibile con toggle (freccia) per mappa full-screen
+- [x] Interazione diretta con marker sulla mappa (i dati real-time sono gia visibili)
+- [x] Animazione fluida apertura/chiusura sidebar (CSS transform, no reflow)
+- [x] Stato sidebar persistente (localStorage) tra sessioni
+- [x] Su mobile: bottom-sheet con 3 stati (chiuso, meta, pieno) via touch drag
+- [x] Drag handle interattivo con stats visibili a sheet chiuso
+- [x] Mini-badge flottante con stats (parcheggi aperti / posti liberi) visibile a sidebar chiusa
 
 ### Ottimizzazione mappa e risparmio risorse (mobile)
-- [ ] Tile map in cache locale (Service Worker / cache API) — evita ri-download tile ad ogni apertura
+- [x] Tile map in cache locale (Service Worker / cache API) — evita ri-download tile ad ogni apertura
 - [ ] Caricare marker statici (posizione, nome, total_spots) da cache locale, aggiornare solo dati real-time (free_spots, status, tendence) via API leggera
 - [ ] Payload API "light" per consultazione: solo `id`, `free_spots`, `status`, `status_label`, `tendence` (~1 KB vs ~15 KB full)
-- [ ] GPS solo su richiesta esplicita ("Vicino a me"), non in background — risparmio batteria
-- [ ] Navigazione verso parcheggio: handoff a Maps nativo (gia implementato), no GPS continuo in-app
-- [ ] Aggiornamento dati smart: refresh solo se app in foreground (Page Visibility API)
-- [ ] Intervallo refresh adattivo: 2 min in consultazione, 30s dopo tap su "Vicino a me"
+- [x] GPS solo su richiesta esplicita ("Vicino a me"), non in background — risparmio batteria
+- [x] Navigazione verso parcheggio: handoff a Maps nativo (gia implementato), no GPS continuo in-app
+- [x] Aggiornamento dati smart: refresh solo se app in foreground (Page Visibility API)
+- [x] Intervallo refresh adattivo: 2 min in consultazione, 30s dopo tap su "Vicino a me"
 - [x] Parcheggi chiusi/fuori servizio: nascondere tendenza ("si libera" / "si riempie") — non ha senso su parcheggio non operativo
-- [ ] Differenziare colore marker per stato: chiuso = grigio (stato normale, fuori orario), fuori servizio = rosso (anomalia, guasto) — oggi entrambi sono grigi
+- [x] Differenziare colore marker per stato: chiuso = grigio (stato normale, fuori orario), fuori servizio = rosso (anomalia, guasto)
 
 ---
 
 ## Punti di Interesse — Ospedali e Universita
 
 ### Ospedali e Pronto Soccorso
-- [ ] Integrazione dati ospedali Torino (ASL Citta di Torino / Regione Piemonte open data)
-- [ ] Posizioni pronto soccorso con coordinate GPS
-- [ ] Suggerimento parcheggio piu vicino a un ospedale selezionato
-- [ ] Layer dedicato sulla mappa (toggle on/off) con icona ospedale
+- [x] Integrazione dati ospedali Torino (8 ospedali principali con coordinate GPS)
+- [x] Posizioni pronto soccorso con coordinate GPS
+- [x] Suggerimento parcheggio piu vicino a un ospedale selezionato
+- [x] Layer dedicato sulla mappa (toggle on/off) con icona ospedale
 - [ ] Possibile integrazione tempi attesa PS (dati Regione Piemonte se disponibili)
 
 ### Universita
-- [ ] Sedi UniTo (Universita di Torino) — campus, facolta, biblioteche
-- [ ] Sedi PoliTo (Politecnico di Torino) — campus Corso Duca degli Abruzzi, Lingotto, Mirafiori
-- [ ] Layer dedicato sulla mappa con icona universita
-- [ ] Suggerimento parcheggio piu vicino + economico per studenti
+- [x] Sedi UniTo (Universita di Torino) — Palazzo Nuovo, Campus Einaudi, Valentino, SAA
+- [x] Sedi PoliTo (Politecnico di Torino) — campus Corso Duca degli Abruzzi, Lingotto
+- [x] Layer dedicato sulla mappa con icona universita
+- [x] Suggerimento parcheggio piu vicino a universita selezionata
 - [ ] Possibile integrazione orari lezioni per previsione affluenza parcheggi vicini
 
 ### Architettura POI generica
-- [ ] Modello dati `points_of_interest` con categoria, nome, coordinate, metadata
-- [ ] Endpoint `GET /api/v1/poi?category=hospital&lat=&lng=&radius=`
-- [ ] Sistema layer sulla mappa con toggle per categoria
-- [ ] Routing: "trova parcheggio vicino a [POI]" come funzionalita principale
+- [x] Modello dati POI con categoria, nome, coordinate, indirizzo (frontend JSON statico)
+- [ ] Endpoint `GET /api/v1/poi?category=hospital&lat=&lng=&radius=` (futuro: migrazione a backend)
+- [x] Sistema layer sulla mappa con toggle per categoria
+- [x] Routing: "trova parcheggio vicino a [POI]" con linee tratteggiate e lista 3 piu vicini
 
 ---
 
