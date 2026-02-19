@@ -5,7 +5,6 @@ HMAC-SHA256 digest (with a static application-level salt) is persisted
 in PostgreSQL.
 """
 
-import hashlib
 import hmac
 import secrets
 from datetime import datetime, timezone
