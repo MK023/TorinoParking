@@ -75,6 +75,29 @@ body {
   background: var(--bg-primary) !important;
 }
 
+.leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.25) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px 0 0 0 !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.leaflet-control-attribution a {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-theme="light"] .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="light"] .leaflet-control-attribution a {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
 .parking-marker,
 .user-marker {
   background: none !important;
