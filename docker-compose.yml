@@ -30,7 +30,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,7 +47,7 @@ services:
     container_name: parking_redis
     command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -91,21 +91,27 @@ services:
     container_name: parking_frontend
     ports:
       - "3000:3000"
+    environment:
+      VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN:-}
     volumes:
       - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
       - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
     depends_on:
       - backend
     networks:
       - parking-network
     restart: unless-stopped
 
-  # Dockhand - Docker Management UI
+  # Dockhand - Docker Management UI (dev tool)
+  # Start with: docker compose --profile tools up -d
   dockhand:
     image: fnsys/dockhand:latest
     container_name: parking_dockhand
+    profiles: ["tools"]
     ports:
-      - "9000:3000"
+      - "127.0.0.1:9000:3000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - dockhand_data:/app/data

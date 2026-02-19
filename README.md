@@ -1,130 +1,169 @@
-# Torino Parking - Real-Time Parking Availability
+# Torino Parking
 
-Applicazione full-stack che aggrega dati real-time dall'API Open Data 5T del Comune di Torino per fornire disponibilita parcheggi tramite mappa interattiva e API REST.
+> Real-time parking availability in Turin, Italy. Open data from [5T Torino](https://opendata.5t.torino.it) updated every 2 minutes.
 
-## Stack Tecnologico
+[![CI](https://github.com/MK023/TorinoParking/actions/workflows/ci.yml/badge.svg)](https://github.com/MK023/TorinoParking/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg)](https://www.python.org/)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg)](https://www.typescriptlang.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
 
-### Backend
-- **FastAPI** (Python 3.12) - API async
-- **PostgreSQL 16 + PostGIS** - storage + query geo-spaziali
-- **Redis 7** - cache con compressione e ETag
-- **APScheduler** - job periodici in-process (fetch dati, cleanup, purge)
-- **structlog** - logging strutturato JSON
-- **Sentry** - error tracking (opzionale)
+<!--
+<p align="center">
+  <img src="docs/screenshot.png" alt="Torino Parking" width="800">
+</p>
+-->
+
+## Overview
+
+Full-stack application that aggregates real-time parking data from Turin's open data platform (5T) and enriches it with static details from GTT (address, rates, payment methods, transit connections). Designed mobile-first with an Apple-inspired UI.
+
+## Features
 
 ### Frontend
-- **React 19** + **TypeScript** - SPA
-- **Leaflet** (react-leaflet) - mappa interattiva
-- **Vite** - dev server + build
+- Interactive Leaflet map with Mapbox tiles (dark/light theme auto-detection)
+- Color-coded markers by occupancy: green (free), amber (filling), red (full), grey (closed/out of service)
+- Marker clustering with triangle indicators for nearly-full lots
+- Geolocation with PostGIS spatial queries ("Near me")
+- Parking detail panel: rates, payment methods, transit lines, accessibility info
+- Historical availability chart (last 6 hours, hourly aggregation)
+- POI layers: hospitals and universities with nearest-parking suggestions
+- Real-time weather display (Open-Meteo, no API key required)
+- Mobile: iOS-style bottom sheet with swipe gestures, frosted glass backdrop, 44px touch targets
+- Desktop: collapsible sidebar with live statistics
+- Smart auto-refresh: 2 min browsing, 30s after geolocation
 
-### Infrastruttura
-- **Docker + Docker Compose** - orchestrazione locale (5 servizi)
-- **GitHub Actions** - CI (lint, test, Docker build)
+### Backend
+- FastAPI async REST API with structured logging (structlog)
+- Redis cache with transparent compression (orjson + zlib) and ETag support
+- PostgreSQL + PostGIS for spatial queries and time-series snapshots
+- In-process APScheduler: fetch 5T data (2 min), log cache stats (hourly), purge old snapshots (daily)
+- API key management with HMAC-SHA256 hashing and configurable salt
+- Multi-tier sliding-window rate limiting (anonymous / authenticated / premium)
+- Input validation via Pydantic, CORS middleware, Sentry integration (optional)
 
-## Funzionalita
+## Architecture
 
-### Mappa Interattiva
-- Mappa dark-themed centrata su Torino con marker colorati per occupazione
-- Colori: verde (<70%), ambra (70-90%), rosso (>90%), grigio (non disponibile)
-- Geolocalizzazione: "Vicino a me" con ricerca parcheggi nel raggio
-- Pannello dettaglio con info GTT: tariffe, metodi pagamento, linee bus, metro
-- Grafico storico disponibilita (ultime 6 ore)
-- Auto-refresh ogni 2 minuti
-- Design responsive (mobile + desktop)
-
-### API Endpoints
-
-| Metodo | Endpoint | Descrizione |
-|--------|----------|-------------|
-| `GET` | `/api/v1/parkings` | Lista parcheggi con disponibilita real-time. Filtri: `?available=true`, `?min_spots=N` |
-| `GET` | `/api/v1/parkings/nearby` | Ricerca geo-spaziale PostGIS. Params: `lat`, `lng`, `radius` (metri), `limit` |
-| `GET` | `/api/v1/parkings/{id}` | Singolo parcheggio per ID |
-| `GET` | `/api/v1/parkings/{id}/history` | Storico disponibilita. Param: `?hours=24` (max 720) |
-| `GET` | `/health` | Health check (Redis + PostgreSQL) |
-| `POST` | `/api/v1/admin/keys` | Crea API key (richiede `X-Admin-Key`) |
-| `GET` | `/api/v1/admin/keys` | Lista API keys |
-| `DELETE` | `/api/v1/admin/keys/{id}` | Revoca API key |
-
-### Core Features
-
-- **Cache Redis** con TTL 120s, compressione orjson + zlib, ETag per conditional requests (304)
-- **Dati arricchiti**: merge automatico dati real-time 5T + dettagli statici GTT (22 parcheggi con indirizzo, tariffe, metodi pagamento, linee bus, metro)
-- **API key management**: HMAC-SHA256, tiers anonymous/authenticated/premium, cache in-memory 60s
-- **Rate limiting**: sliding window multi-tier (20/100/1000 req/min) con Redis sorted sets
-- **Background jobs**: fetch 5T ogni 2 min, cleanup cache ogni ora, purge snapshot ogni notte
-- **Snapshot storici**: tabella time-series con retention 30 giorni
-
-### Architettura
-
-Clean Architecture con separazione domain/infrastructure/API:
-- Domain layer: entita frozen dataclass, Protocol per contracts
-- Infrastructure: repository PostgreSQL, client HTTP 5T, cache Redis
-- API: FastAPI routes, middleware stack (security headers, rate limiting, access log, request ID)
-- Frontend: React SPA con Leaflet, hook custom con auto-refresh
+```
+Client (Browser/Mobile)
+        │
+        ▼
+┌──────────────────────────┐
+│  React 19 + Vite + TS    │  :3000
+│  Leaflet + Mapbox tiles   │
+└──────────┬───────────────┘
+           │ JSON
+           ▼
+┌──────────────────────────┐
+│  FastAPI Backend          │  :8000
+│  APScheduler (in-process) │──→ 5T Open Data API (XML)
+└────┬─────────┬───────────┘
+     │         │
+     ▼         ▼
+ PostgreSQL   Redis
+ + PostGIS    Cache
+```
 
 ## Quick Start
 
 ```bash
-# 1. Clone
+# Clone
 git clone https://github.com/MK023/TorinoParking.git
 cd TorinoParking
 
-# 2. Configura environment
+# Configure environment
 cp .env.example .env
+# Edit .env: set ADMIN_API_KEY, POSTGRES_PASSWORD, VITE_MAPBOX_TOKEN
 
-# 3. Avvia con Docker Compose (backend + frontend + DB + cache)
-docker-compose up -d
+# Start all services
+docker compose up -d
 
-# 4. Verifica
-curl http://localhost:8000/health
+# Or use the helper script (auto-detects Doppler secrets)
+./scripts/start.sh
 ```
 
-| Servizio | URL |
-|----------|-----|
-| Frontend (mappa) | http://localhost:3000 |
-| Backend API | http://localhost:8000 |
-| Swagger UI (dev) | http://localhost:8000/docs |
-| Dockhand (Docker UI) | http://localhost:9000 |
+| Service   | URL                          |
+|-----------|------------------------------|
+| Frontend  | http://localhost:3000         |
+| Backend   | http://localhost:8000         |
+| API Docs  | http://localhost:8000/docs    |
 
-## Test
+### Secrets Management
+
+The project supports [Doppler](https://www.doppler.com/) for secrets management. If Doppler CLI is configured, the start script auto-detects it and injects secrets. Otherwise, it falls back to the `.env` file.
 
 ```bash
-# Unit tests (no Docker richiesto)
-python -m pytest tests/unit/ -v
+# With Doppler
+doppler run -- docker compose up -d
 
-# Integration + E2E (richiede Docker per testcontainers)
-python -m pytest tests/ -v
+# Without Doppler
+docker compose up -d  # reads from .env
 ```
 
-## Documentazione
+## API Endpoints
 
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Architettura del sistema
-- **[docs/SECURITY.md](docs/SECURITY.md)** - Threat model e security practices
-- **[docs/GDPR.md](docs/GDPR.md)** - Compliance GDPR e privacy
-- **[docs/SETUP.md](docs/SETUP.md)** - Setup locale e troubleshooting
-- **[ROADMAP.md](ROADMAP.md)** - Miglioramenti futuri
+| Method | Endpoint                           | Description                    |
+|--------|------------------------------------|--------------------------------|
+| GET    | `/api/v1/parkings`                 | All parkings (cached)          |
+| GET    | `/api/v1/parkings?available=true`  | Filter by availability         |
+| GET    | `/api/v1/parkings?min_spots=5`     | Filter by minimum free spots   |
+| GET    | `/api/v1/parkings/nearby`          | Spatial search (lat/lng/radius) |
+| GET    | `/api/v1/parkings/{id}/history`    | Historical snapshots           |
+| GET    | `/health`                          | Health check                   |
 
-## Security
+Full interactive docs at `/docs` (Swagger UI) or `/redoc`.
 
-- API key con hash HMAC-SHA256 (salt configurabile via env var)
-- Rate limiting per IP (anonymous) e per API key (authenticated)
-- Security headers: X-Content-Type-Options, X-Frame-Options, Cache-Control
-- CORS configurabile per environment
-- Secrets in environment variables
-- Input validation con Pydantic
+## Tech Stack
 
-## CI/CD
+| Layer      | Technology                                          |
+|------------|-----------------------------------------------------|
+| Frontend   | React 19, TypeScript 5, Vite 7, Leaflet, Mapbox     |
+| Backend    | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2      |
+| Database   | PostgreSQL 16 + PostGIS 3.4                          |
+| Cache      | Redis 7 (LRU, 512MB)                                |
+| Scheduler  | APScheduler (AsyncIO, in-process)                    |
+| CI/CD      | GitHub Actions (lint, test, build, security audit)   |
+| Infra      | Docker Compose, Doppler (optional)                   |
 
-GitHub Actions pipeline: **ruff lint** -> **pytest con coverage** -> **Docker build**
+## Data Sources
 
-## Roadmap
+- **Real-time:** [5T Torino Open Data](https://opendata.5t.torino.it) — 40 parking facilities, updated every 2 minutes
+- **Static enrichment:** GTT — 22 parkings with address, rates, payment methods, transit connections
+- **Weather:** [Open-Meteo](https://open-meteo.com) — current conditions, no API key required
+- **POI:** Hospitals (8) and universities (6) with GPS coordinates
 
-Vedi [ROADMAP.md](ROADMAP.md) per i miglioramenti pianificati: HTTPS/TLS, circuit breaker, Prometheus metrics, user authentication JWT, push notifications, app mobile iOS.
+## Documentation
+
+| Document                                    | Content                              |
+|---------------------------------------------|--------------------------------------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)     | System architecture and data flow    |
+| [SETUP.md](docs/SETUP.md)                   | Development setup guide              |
+| [SECURITY.md](docs/SECURITY.md)             | Threat model and security practices  |
+| [GDPR.md](docs/GDPR.md)                     | Privacy compliance reference         |
+| [ROADMAP.md](ROADMAP.md)                    | Roadmap and progress tracking        |
+
+## Development
+
+```bash
+# Backend linting
+ruff check app/ tests/
+ruff format app/ tests/
+
+# Backend tests
+pytest tests/ -v --cov=app
+
+# Frontend type check
+cd frontend && npx tsc --noEmit
+
+# Frontend build
+cd frontend && npm run build
+```
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
-## Contatti
+## Author
 
-Marco Bellingeri - [@MK023](https://github.com/MK023)
+Marco Bellingeri — [@MK023](https://github.com/MK023)

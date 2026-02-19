@@ -1,0 +1,3 @@
+setup:
+  project: torino-parking
+  config: dev

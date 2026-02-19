@@ -43,6 +43,7 @@ def pytest_configure(config):
                 password="parking",
                 dbname="parking",
             )
+            .with_name("torinoparking_test_postgres")
             .with_exposed_ports(5432)
         )
         _pg_container.start()
@@ -53,7 +54,11 @@ def pytest_configure(config):
             f"postgresql+asyncpg://parking:parking@{pg_host}:{pg_port}/parking"
         )
 
-        _redis_container = RedisContainer(image="redis:7-alpine").with_exposed_ports(6379)
+        _redis_container = (
+            RedisContainer(image="redis:7-alpine")
+            .with_name("torinoparking_test_redis")
+            .with_exposed_ports(6379)
+        )
         _redis_container.start()
 
         redis_host = _redis_container.get_container_host_ip()

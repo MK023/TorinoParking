@@ -29,7 +29,7 @@ class ParkingXMLParser:
                 lng=float(pk["@lng"]),
             )
         except (KeyError, ValueError, TypeError) as e:
-            logger.warning("parse_parking_failed", error=str(e), raw_data=pk)
+            logger.warning("parse_parking_failed", error=str(e), parking_id=pk.get("@ID"))
             return None
 
     @classmethod
@@ -37,7 +37,7 @@ class ParkingXMLParser:
         try:
             data = xmltodict.parse(xml_text)
             pk_list = data["traffic_data"]["PK_data"]
-        except (KeyError, Exception) as e:
+        except Exception as e:
             raise FiveTApiError(f"Unexpected 5T XML format: {e}") from e
 
         if isinstance(pk_list, dict):

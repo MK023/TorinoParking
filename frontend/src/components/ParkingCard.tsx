@@ -1,19 +1,5 @@
 import type { Parking } from "../types/parking";
-
-function getStatusColor(parking: Parking): string {
-  if (!parking.is_available) return "#6b7280";
-  if (parking.occupancy_percentage === null) return "#6b7280";
-  if (parking.occupancy_percentage >= 90) return "#ef4444";
-  if (parking.occupancy_percentage >= 70) return "#f59e0b";
-  return "#22c55e";
-}
-
-function getTendenceIcon(t: number | null): string {
-  if (t === null) return "";
-  if (t > 0) return "↑";
-  if (t < 0) return "↓";
-  return "→";
-}
+import { getStatusColor, getTendenceInfo } from "../utils/parking";
 
 interface Props {
   parking: Parking;
@@ -22,15 +8,23 @@ interface Props {
 
 export default function ParkingCard({ parking, onClick }: Props) {
   const color = getStatusColor(parking);
+  const tendence = getTendenceInfo(parking.tendence, parking);
+  const d = parking.detail;
+
+  const nearlyFull = parking.is_available && parking.occupancy_percentage !== null && parking.occupancy_percentage >= 90;
 
   return (
     <div className="parking-card" onClick={onClick}>
       <div className="parking-card-header">
-        <div className="parking-card-indicator" style={{ background: color }} />
+        {nearlyFull ? (
+          <div className="parking-card-indicator-triangle" style={{ borderTopColor: color }} />
+        ) : (
+          <div className="parking-card-indicator" style={{ background: color }} />
+        )}
         <div className="parking-card-info">
           <h3>{parking.name}</h3>
-          {parking.detail?.address && (
-            <p className="parking-card-address">{parking.detail.address}</p>
+          {d?.address && (
+            <p className="parking-card-address">{d.address}</p>
           )}
         </div>
         <div className="parking-card-spots">
@@ -63,14 +57,27 @@ export default function ParkingCard({ parking, onClick }: Props) {
         <span>{parking.total_spots} posti totali</span>
         {parking.tendence !== null && (
           <span className="tendence" style={{ color }}>
-            {getTendenceIcon(parking.tendence)}{" "}
-            {parking.tendence > 0 ? "si libera" : parking.tendence < 0 ? "si riempie" : "stabile"}
+            {tendence.icon} {tendence.text}
           </span>
         )}
-        {parking.detail && (
-          <span className="has-detail-badge">GTT</span>
+        {d?.operator && (
+          <span className="has-detail-badge">{d.operator}</span>
         )}
       </div>
+
+      {d && (
+        <div className="parking-card-tags">
+          {d.hourly_rate_daytime !== null && (
+            <span className="card-tag card-tag-price">&euro;{d.hourly_rate_daytime.toFixed(2)}/h</span>
+          )}
+          {d.is_covered && <span className="card-tag">Coperto</span>}
+          {d.open_24h && <span className="card-tag">24h</span>}
+          {d.has_metro_access && <span className="card-tag card-tag-metro">Metro</span>}
+          {d.disabled_spots !== null && d.disabled_spots > 0 && (
+            <span className="card-tag">{d.disabled_spots} disabili</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

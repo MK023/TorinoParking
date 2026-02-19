@@ -2,7 +2,6 @@
 
 import pytest
 
-
 ADMIN_HEADERS = {"X-Admin-Key": "test-admin-key-that-is-long-enough-32ch"}
 
 

@@ -8,7 +8,7 @@ The module exports a cached singleton accessible as ``settings``.
 import json
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     admin_api_key: str = ""
 
-    hmac_salt: str = "torino-parking-api-key-salt-v1"
+    hmac_salt: str = ""
 
     five_t_api_url: str = "https://opendata.5t.torino.it/get_pk"
     five_t_timeout: int = 10
@@ -54,6 +54,17 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return json.loads(v)
         return v
+
+    @model_validator(mode="after")
+    def _validate_production_secrets(self) -> "Settings":
+        """Enforce strong secrets outside development/test environments."""
+        if self.environment in ("development", "test"):
+            return self
+        if not self.admin_api_key or len(self.admin_api_key) < 32:
+            raise ValueError("ADMIN_API_KEY must be at least 32 characters in production")
+        if not self.hmac_salt or len(self.hmac_salt) < 16:
+            raise ValueError("HMAC_SALT must be at least 16 characters in production")
+        return self
 
     sentry_dsn: str = ""
 

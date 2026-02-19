@@ -35,10 +35,117 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Pannello dettaglio con info GTT (tariffe, pagamenti, bus, metro)
 - [x] Grafico storico disponibilita' (ultime 6 ore)
 - [x] Auto-refresh ogni 2 minuti
-- [x] Filtri: solo disponibili, posti minimi, raggio ricerca
+- [x] Filtri pill-toggle: disponibili, disabili, pagamento elettronico, coperto, metro
+- [x] Filtri POI separati con label "Punti di interesse" e colori dedicati
 - [x] Ricerca parcheggi per nome
 - [x] Design responsive (mobile + desktop)
+- [x] Mobile bottom-sheet con drag handle e touch target 44px
+- [x] Libreria icone SVG (sostituisce emoji cross-platform)
+- [x] Pannello dettaglio con sezioni condizionali (tariffe griglia, badge pagamento, trasporti)
+- [x] Grafico storico aggregato per ora (max 7 barre)
+- [x] Banner "parcheggio piu vicino" con navigatore nativo
+- [x] Bottone "Naviga" con deep link Apple Maps / Google Maps
 - [x] Docker container con hot reload
+- [x] Tema chiaro/scuro con rilevamento preferenza sistema + toggle manuale
+- [x] Tile mappa Mapbox (dark-v11 / light-v11) con switch istantaneo al cambio tema
+- [x] Meteo attuale Torino (OpenMeteo) nella barra collassata
+- [x] Filtri per stato parcheggio: Liberi, Pieni, Si riempie, Fuori servizio, Chiusi (pill con colori dedicati, logica OR)
+- [x] Clustering marker con react-leaflet-cluster e icone custom
+- [x] Limiti mappa Torino (maxBounds) per impedire navigazione fuori citta
+- [x] Mobile: swipe-down iOS-style per chiudere il dettaglio parcheggio (con resistenza smorzata e spring-back)
+- [x] Mobile: proportions responsive per tutti gli schermi (iPhone SE fino a Pro Max)
+- [x] Mobile: bottom bar frosted-glass con stats e meteo compatti
+- [x] Token Mapbox spostato in variabile d'ambiente VITE_MAPBOX_TOKEN (non piu' hardcoded)
+- [x] Sidebar desktop collassabile con pulsante centrato verticalmente
+- [x] Font Apple SF Pro Display per look nativo iOS
+
+---
+
+## Prossimi passi — Frontend UX
+
+### Sidebar collassabile e mappa interattiva
+- [x] Sidebar chiudibile con toggle (freccia) per mappa full-screen
+- [x] Interazione diretta con marker sulla mappa (i dati real-time sono gia visibili)
+- [x] Animazione fluida apertura/chiusura sidebar (CSS transform, no reflow)
+- [x] Stato sidebar persistente (localStorage) tra sessioni
+- [x] Su mobile: bottom-sheet con 3 stati (chiuso, meta, pieno) via touch drag
+- [x] Drag handle interattivo con stats visibili a sheet chiuso
+- [x] Mini-badge flottante con stats (parcheggi aperti / posti liberi) visibile a sidebar chiusa
+
+### Ottimizzazione mappa e risparmio risorse (mobile)
+- [x] Tile map in cache locale (Service Worker / cache API) — evita ri-download tile ad ogni apertura
+- [ ] Caricare marker statici (posizione, nome, total_spots) da cache locale, aggiornare solo dati real-time (free_spots, status, tendence) via API leggera
+- [ ] Payload API "light" per consultazione: solo `id`, `free_spots`, `status`, `status_label`, `tendence` (~1 KB vs ~15 KB full)
+- [x] GPS solo su richiesta esplicita ("Vicino a me"), non in background — risparmio batteria
+- [x] Navigazione verso parcheggio: handoff a Maps nativo (gia implementato), no GPS continuo in-app
+- [x] Aggiornamento dati smart: refresh solo se app in foreground (Page Visibility API)
+- [x] Intervallo refresh adattivo: 2 min in consultazione, 30s dopo tap su "Vicino a me"
+- [x] Parcheggi chiusi/fuori servizio: nascondere tendenza ("si libera" / "si riempie") — non ha senso su parcheggio non operativo
+- [x] Differenziare colore marker per stato: chiuso = grigio (stato normale, fuori orario), fuori servizio = rosso (anomalia, guasto)
+
+---
+
+## Punti di Interesse — Ospedali e Universita
+
+### Ospedali e Pronto Soccorso
+- [x] Integrazione dati ospedali Torino (8 ospedali principali con coordinate GPS)
+- [x] Posizioni pronto soccorso con coordinate GPS
+- [x] Suggerimento parcheggio piu vicino a un ospedale selezionato
+- [x] Layer dedicato sulla mappa (toggle on/off) con icona ospedale
+- [ ] Possibile integrazione tempi attesa PS (dati Regione Piemonte se disponibili)
+
+### Universita
+- [x] Sedi UniTo (Universita di Torino) — Palazzo Nuovo, Campus Einaudi, Valentino, SAA
+- [x] Sedi PoliTo (Politecnico di Torino) — campus Corso Duca degli Abruzzi, Lingotto
+- [x] Layer dedicato sulla mappa con icona universita
+- [x] Suggerimento parcheggio piu vicino a universita selezionata
+- [ ] Possibile integrazione orari lezioni per previsione affluenza parcheggi vicini
+
+### Architettura POI generica
+- [x] Modello dati POI con categoria, nome, coordinate, indirizzo (frontend JSON statico)
+- [ ] Endpoint `GET /api/v1/poi?category=hospital&lat=&lng=&radius=` (futuro: migrazione a backend)
+- [x] Sistema layer sulla mappa con toggle per categoria
+- [x] Routing: "trova parcheggio vicino a [POI]" con linee solide e lista 3 piu vicini
+- [x] Marker POI con forme uniche: ospedali = quadrato arrotondato teal, universita = diamante viola
+- [x] Selezione POI con ingrandimento, glow e dimming marker non collegati
+- [x] Z-index gerarchico: POI selezionato > parcheggi collegati > normali > dimmed
+
+### POI personalizzati dagli utenti (futuro)
+- [ ] Utenti possono segnare parcheggi preferiti
+- [ ] Navigazione diretta al parcheggio preferito
+- [ ] Richiede autenticazione utente e storage preferiti lato backend
+
+---
+
+## Meteo e Informazioni Contestuali
+
+### Meteo in-app
+- [x] Integrazione OpenMeteo API (gratis, no API key) per condizioni attuali Torino
+- [x] Temperatura e icona meteo nella barra collassata (desktop + mobile)
+- [ ] Previsioni orarie per pianificare parcheggio coperto vs scoperto
+- [ ] Integrazione meteo come feature ML per previsione affluenza
+
+### Informazioni nella barra collassata
+- [x] Meteo attuale (temperatura + condizioni)
+- [ ] Traffico in tempo reale (integrazione Google Traffic o TomTom)
+- [ ] Notifiche: eventi in citta che impattano parcheggi
+- [ ] Tendenza generale: citta si sta riempiendo / svuotando
+
+---
+
+## Mappa Nativa (post-MVP)
+
+### Mappe native per mobile
+- [ ] Apple Maps su iOS (MapKit JS o app nativa Swift)
+- [ ] Google Maps su Android (Maps SDK)
+- [ ] Transizione da Leaflet/Mapbox dark-v11/light-v11 a mappe native per UX premium
+- [ ] Richiede passaggio a React Native / Capacitor o app nativa
+
+### Interattivita mappa avanzata
+- [x] Clustering marker per zoom out
+- [ ] Animazioni fluide marker (aggiornamento posti in tempo reale)
+- [ ] 3D buildings su zoom elevato (dove supportato)
+- [ ] Street View integrato per orientarsi all'arrivo
 
 ---
 
@@ -196,14 +303,44 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 
 ---
 
-## Qualita del Codice
+## Qualita del Codice — CI Pipeline Post-MVP
 
-- [ ] mypy strict mode su tutto il codebase
-- [ ] Mutation testing (mutmut) per validare efficacia dei test
-- [ ] Load testing con Locust: profilo di carico realistico
-- [ ] Pre-commit hooks: ruff + mypy + test unitari
+### Lint e analisi statica
+- [ ] ESLint strict + Prettier per frontend (no warning tollerati)
+- [ ] Ruff lint + format per backend Python
+- [ ] mypy strict mode su tutto il backend
+- [ ] Rimozione codice morto e import inutili (treeshake audit)
+- [ ] TypeScript strict: `noUnusedLocals`, `noUnusedParameters`
+
+### Testing e coverage
+- [ ] Test critici frontend: hook useParkings, useWeather, useBottomSheet
+- [ ] Test componenti: Sidebar collapsed states, Filters, ParkingCard
+- [ ] Coverage target backend: 90%+ (attualmente 80%)
+- [ ] Coverage target frontend: 70%+ (attualmente 0%)
+- [ ] Mutation testing (mutmut) per validare efficacia test backend
 - [ ] API contract testing con Schemathesis
-- [ ] Coverage target: 90%+ (attualmente 80%)
+
+### CI dedicata (GitHub Actions)
+- [ ] Pipeline: lint → type-check → test → build → audit
+- [ ] Controllo tipi TypeScript (`tsc --noEmit`) in CI
+- [ ] Controllo tipi Python (`mypy --strict`) in CI
+- [ ] Bundle size check (alert se supera soglia)
+- [ ] Lighthouse CI per performance frontend
+- [ ] Pre-commit hooks: ruff + mypy + eslint + test unitari
+
+### Sicurezza e audit
+- [ ] `npm audit` / `pip audit` in CI
+- [ ] Dependency scanning automatico (Dependabot o Snyk)
+- [ ] Audit connessioni DB: connection pool, timeout, leak detection
+- [ ] OWASP ZAP scan periodico su endpoint pubblici
+- [ ] Secret scanning in CI (no credenziali committate)
+
+### Ottimizzazione e performance
+- [ ] Snellire bundle frontend (analisi con `vite-bundle-visualizer`)
+- [ ] Lazy loading componenti pesanti (ParkingDetail, grafico storico)
+- [ ] Ottimizzare re-render React (memo, useMemo dove necessario)
+- [ ] Payload API "light" per consultazione rapida (~1 KB vs ~15 KB)
+- [ ] Load testing con Locust: profilo di carico realistico
 - [ ] Documentazione API OpenAPI completa con esempi per ogni endpoint
 
 ---

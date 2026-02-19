@@ -1,22 +1,71 @@
+import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import type { Parking } from "../types/parking";
+import type { POI, POICategory } from "../types/poi";
+import type { Theme } from "../hooks/useTheme";
+import { getStatusColor, getTendenceInfo } from "../utils/parking";
+import POILayer, { getNearestParkings } from "./POILayer";
+import MapLegend from "./MapLegend";
 import "leaflet/dist/leaflet.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN ?? "";
+
+const TILE_URLS: Record<Theme, string> = {
+  dark: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`,
+  light: `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`,
+};
 
 const TORINO_CENTER: [number, number] = [45.0703, 7.6869];
 const DEFAULT_ZOOM = 13;
 
-function getMarkerColor(parking: Parking): string {
-  if (!parking.is_available) return "#6b7280"; // gray
-  if (parking.occupancy_percentage === null) return "#6b7280";
-  if (parking.occupancy_percentage >= 90) return "#ef4444"; // red
-  if (parking.occupancy_percentage >= 70) return "#f59e0b"; // amber
-  return "#22c55e"; // green
-}
+// Limiti mappa: solo Torino città, niente comuni limitrofi
+const TORINO_BOUNDS: L.LatLngBoundsExpression = [
+  [45.005, 7.58],  // sud-ovest
+  [45.14, 7.78],   // nord-est
+];
 
-function createIcon(parking: Parking): L.DivIcon {
-  const color = getMarkerColor(parking);
-  const spots = parking.free_spots !== null ? parking.free_spots : "—";
+function createIcon(parking: Parking, dimmed = false): L.DivIcon {
+  const color = getStatusColor(parking);
+  const spots = parking.free_spots !== null ? parking.free_spots : "\u2014";
+  const nearlyFull = parking.is_available && parking.occupancy_percentage !== null && parking.occupancy_percentage >= 90;
+
+  if (nearlyFull) {
+    // Triangolo rovesciato per parcheggi quasi esauriti
+    return L.divIcon({
+      className: "parking-marker parking-marker-triangle",
+      html: `
+        <div style="
+          width: 0; height: 0;
+          border-left: 20px solid transparent;
+          border-right: 20px solid transparent;
+          border-top: 34px solid ${color};
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,${dimmed ? "0.1" : "0.4"}));
+          opacity: ${dimmed ? 0.25 : 1};
+          transition: opacity 0.3s ease;
+          position: relative;
+        ">
+          <span style="
+            position: absolute;
+            top: -32px;
+            left: -8px;
+            width: 16px;
+            text-align: center;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+          ">${spots}</span>
+        </div>
+      `,
+      iconSize: [40, 34],
+      iconAnchor: [20, 4],
+      popupAnchor: [0, -2],
+    });
+  }
+
   return L.divIcon({
     className: "parking-marker",
     html: `
@@ -32,7 +81,9 @@ function createIcon(parking: Parking): L.DivIcon {
         font-size: 11px;
         font-weight: 700;
         border: 2px solid white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        box-shadow: 0 2px 6px rgba(0,0,0,${dimmed ? "0.1" : "0.35"});
+        opacity: ${dimmed ? 0.25 : 1};
+        transition: opacity 0.3s ease;
       ">${spots}</div>
     `,
     iconSize: [36, 36],
@@ -41,11 +92,27 @@ function createIcon(parking: Parking): L.DivIcon {
   });
 }
 
-function formatTendence(t: number | null): string {
-  if (t === null) return "";
-  if (t > 0) return " ↑ si sta liberando";
-  if (t < 0) return " ↓ si sta riempiendo";
-  return " → stabile";
+function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
+  const count = cluster.getChildCount();
+  return L.divIcon({
+    className: "parking-cluster",
+    html: `<div style="
+      background: var(--accent, #3b82f6);
+      color: white;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    ">${count}</div>`,
+    iconSize: [42, 42],
+    iconAnchor: [21, 21],
+  });
 }
 
 interface FlyToProps {
@@ -55,7 +122,25 @@ interface FlyToProps {
 
 function FlyTo({ center, zoom }: FlyToProps) {
   const map = useMap();
-  map.flyTo(center, zoom, { duration: 1.2 });
+  const [lat, lng] = center;
+  useEffect(() => {
+    map.flyTo([lat, lng], zoom, { duration: 1.2 });
+  }, [map, lat, lng, zoom]);
+  return null;
+}
+
+function MapClickHandler({ onClick }: { onClick?: () => void }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!onClick) return;
+    const handler = (e: L.LeafletMouseEvent) => {
+      const target = e.originalEvent.target as HTMLElement;
+      if (target?.closest('.parking-marker, .poi-marker, .leaflet-popup')) return;
+      onClick();
+    };
+    map.on("click", handler);
+    return () => { map.off("click", handler); };
+  }, [map, onClick]);
   return null;
 }
 
@@ -64,11 +149,21 @@ interface Props {
   selectedId: number | null;
   onSelect: (parking: Parking) => void;
   userPosition: [number, number] | null;
+  onMapClick?: () => void;
+  pois?: POI[];
+  activePOILayers?: Set<POICategory>;
+  selectedPOI?: POI | null;
+  onSelectPOI?: (poi: POI | null) => void;
+  theme?: Theme;
 }
 
-export default function ParkingMap({ parkings, selectedId, onSelect, userPosition }: Props) {
+export default function ParkingMap({ parkings, onSelect, userPosition, onMapClick, pois, activePOILayers, selectedPOI, onSelectPOI, theme = "dark" }: Props) {
   const flyTarget = userPosition || TORINO_CENTER;
   const flyZoom = userPosition ? 15 : DEFAULT_ZOOM;
+
+  const highlightedIds = selectedPOI
+    ? new Set(getNearestParkings(selectedPOI, parkings).map((p) => p.id))
+    : null;
 
   return (
     <MapContainer
@@ -76,11 +171,19 @@ export default function ParkingMap({ parkings, selectedId, onSelect, userPositio
       zoom={DEFAULT_ZOOM}
       className="parking-map"
       zoomControl={false}
+      maxBounds={TORINO_BOUNDS}
+      maxBoundsViscosity={1.0}
+      minZoom={12}
+      maxZoom={18}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        key={theme}
+        attribution='&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url={TILE_URLS[theme]}
+        tileSize={512}
+        zoomOffset={-1}
       />
+      <MapClickHandler onClick={onMapClick} />
 
       {userPosition && <FlyTo center={flyTarget} zoom={flyZoom} />}
 
@@ -90,66 +193,102 @@ export default function ParkingMap({ parkings, selectedId, onSelect, userPositio
           icon={L.divIcon({
             className: "user-marker",
             html: `<div style="
-              width: 16px; height: 16px;
-              background: #3b82f6;
+              width: 18px; height: 18px;
+              background: linear-gradient(135deg, #60a5fa, #3b82f6);
               border: 3px solid white;
               border-radius: 50%;
-              box-shadow: 0 0 12px rgba(59,130,246,0.6);
+              box-shadow: 0 0 12px rgba(59,130,246,0.5), 0 2px 4px rgba(0,0,0,0.2);
             "></div>`,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8],
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
           })}
         />
       )}
 
-      {parkings.map((p) => (
-        <Marker
-          key={p.id}
-          position={[p.lat, p.lng]}
-          icon={createIcon(p)}
-          eventHandlers={{ click: () => onSelect(p) }}
-        >
-          <Popup>
-            <div style={{ minWidth: 180 }}>
-              <strong>{p.name}</strong>
-              <div style={{ margin: "6px 0", fontSize: 13 }}>
-                {p.is_available ? (
-                  <span style={{ color: "#22c55e" }}>
-                    {p.free_spots} / {p.total_spots} posti liberi
-                  </span>
-                ) : (
-                  <span style={{ color: "#ef4444" }}>{p.status_label}</span>
-                )}
-                <span style={{ fontSize: 11, opacity: 0.7 }}>
-                  {formatTendence(p.tendence)}
-                </span>
-              </div>
-              {p.occupancy_percentage !== null && (
-                <div style={{
-                  height: 6,
-                  background: "#374151",
-                  borderRadius: 3,
-                  overflow: "hidden",
-                  marginTop: 4,
-                }}>
-                  <div style={{
-                    height: "100%",
-                    width: `${p.occupancy_percentage}%`,
-                    background: getMarkerColor(p),
-                    borderRadius: 3,
-                    transition: "width 0.5s",
-                  }} />
+      <MarkerClusterGroup
+        key={selectedPOI ? "no-cluster" : "cluster"}
+        maxClusterRadius={selectedPOI ? 0 : 35}
+        spiderfyOnMaxZoom
+        showCoverageOnHover={false}
+        iconCreateFunction={createClusterIcon}
+      >
+        {parkings.map((p) => {
+          const tendence = getTendenceInfo(p.tendence, p);
+          const dimmed = highlightedIds !== null && !highlightedIds.has(p.id);
+          const zOffset = highlightedIds === null ? 0 : dimmed ? -1000 : 1000;
+          return (
+            <Marker
+              key={p.id}
+              position={[p.lat, p.lng]}
+              icon={createIcon(p, dimmed)}
+              zIndexOffset={zOffset}
+              eventHandlers={{ click: () => onSelect(p) }}
+            >
+              <Popup>
+                <div style={{ minWidth: 200 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <strong style={{ fontSize: 14 }}>{p.name}</strong>
+                    {p.free_spots !== null && (
+                      <span style={{
+                        fontSize: 18, fontWeight: 800, color: getStatusColor(p),
+                        letterSpacing: -1, lineHeight: 1,
+                      }}>{p.free_spots}</span>
+                    )}
+                  </div>
+                  <div style={{ margin: "6px 0", fontSize: 12 }}>
+                    {p.is_available ? (
+                      <span style={{ color: "var(--text-secondary)" }}>
+                        {p.free_spots} / {p.total_spots} posti liberi
+                      </span>
+                    ) : (
+                      <span style={{ color: "#ef4444", fontWeight: 600 }}>{p.status_label}</span>
+                    )}
+                    {tendence.icon && (
+                      <span style={{ fontSize: 11, opacity: 0.7 }}>
+                        {" "}{tendence.icon} {tendence.text}
+                      </span>
+                    )}
+                  </div>
+                  {p.occupancy_percentage !== null && (
+                    <div style={{
+                      height: 5,
+                      background: "var(--border)",
+                      borderRadius: 3,
+                      overflow: "hidden",
+                      marginTop: 6,
+                    }}>
+                      <div style={{
+                        height: "100%",
+                        width: `${p.occupancy_percentage}%`,
+                        background: getStatusColor(p),
+                        borderRadius: 3,
+                        transition: "width 0.8s cubic-bezier(0.32, 0.72, 0, 1)",
+                      }} />
+                    </div>
+                  )}
+                  {p.detail?.address && (
+                    <div style={{ fontSize: 11, marginTop: 8, color: "var(--text-muted)" }}>
+                      {p.detail.address}
+                    </div>
+                  )}
                 </div>
-              )}
-              {p.detail?.address && (
-                <div style={{ fontSize: 11, marginTop: 6, opacity: 0.7 }}>
-                  {p.detail.address}
-                </div>
-              )}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MarkerClusterGroup>
+
+      {pois && activePOILayers && onSelectPOI && (
+        <POILayer
+          pois={pois}
+          activeLayers={activePOILayers}
+          parkings={parkings}
+          selectedPOI={selectedPOI ?? null}
+          onSelectPOI={onSelectPOI}
+        />
+      )}
+
+      <MapLegend />
     </MapContainer>
   );
 }

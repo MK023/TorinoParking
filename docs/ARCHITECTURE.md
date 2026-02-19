@@ -9,13 +9,14 @@ Documento di architettura del sistema.
 ## Overview Sistema
 
 ```
-┌─────────────┐
-│ Mobile App  │
-│ iOS/Android │
-└──────┬──────┘
-       │ HTTPS/JSON
-       │ API Key
-       ▼
+┌─────────────┐     ┌─────────────────────┐
+│ Mobile/Web  │     │  React Frontend     │
+│  Browser    │     │  (Vite + TypeScript) │
+└──────┬──────┘     └──────────┬──────────┘
+       │ HTTPS/JSON            │ localhost:3000
+       └──────────┬────────────┘
+                  │
+                  ▼
 ┌──────────────────────────────────┐
 │      FastAPI Backend             │
 │  ┌────────────────────────────┐  │
@@ -193,7 +194,7 @@ Max memory: 512MB
 ```python
 # Periodic jobs (in-process APScheduler)
 1. fetch_parking_data (every 2 min)   — fetch from 5T API, update cache + DB
-2. cleanup_expired_cache (every hour) — remove stale Redis keys
+2. log_cache_stats (every hour) — log Redis memory and key count
 3. purge_old_snapshots (daily)        — delete parking_snapshots older than retention period
 ```
 
@@ -223,9 +224,15 @@ Max memory: 512MB
 │  └──────────────────────────┘  │
 │                                │
 │  ┌──────────────────────────┐  │
+│  │  frontend (container)    │  │
+│  │  React 19 + Vite 7       │  │
+│  │  Port: 3000              │  │
+│  └──────────────────────────┘  │
+│                                │
+│  ┌──────────────────────────┐  │
 │  │  dockhand (container)    │  │
 │  │  Docker UI Manager       │  │
-│  │  Port: 3000              │  │
+│  │  Port: 9000 (profiles)   │  │
 │  └──────────────────────────┘  │
 └────────────────────────────────┘
 ```
