@@ -12,13 +12,15 @@ import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 
+const MAPBOX_TOKEN = "pk.eyJ1IjoiZW1tZWthcHBhMjMiLCJhIjoiY21sdGEzNjMzMGRiOTNmc2c1NjNkajd6dSJ9.u12KMwhY74Krp4vW2HE5cw";
+
 const TILE_URLS: Record<Theme, string> = {
-  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-  light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+  dark: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`,
+  light: `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`,
 };
 
 const TORINO_CENTER: [number, number] = [45.0703, 7.6869];
-const DEFAULT_ZOOM = 14;
+const DEFAULT_ZOOM = 13;
 
 // Limiti mappa: solo Torino città, niente comuni limitrofi
 const TORINO_BOUNDS: L.LatLngBoundsExpression = [
@@ -175,8 +177,10 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
     >
       <TileLayer
         key={theme}
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        attribution='&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url={TILE_URLS[theme]}
+        tileSize={512}
+        zoomOffset={-1}
       />
       <MapClickHandler onClick={onMapClick} />
 
@@ -201,7 +205,8 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
       )}
 
       <MarkerClusterGroup
-        maxClusterRadius={35}
+        key={selectedPOI ? "no-cluster" : "cluster"}
+        maxClusterRadius={selectedPOI ? 0 : 35}
         spiderfyOnMaxZoom
         showCoverageOnHover={false}
         iconCreateFunction={createClusterIcon}

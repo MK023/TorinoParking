@@ -3,7 +3,6 @@ import type { Parking } from "./types/parking";
 import type { POI, POICategory } from "./types/poi";
 import { poiData } from "./data/poi";
 import { useParkings } from "./hooks/useParkings";
-import { useBottomSheet } from "./hooks/useBottomSheet";
 import { useTheme } from "./hooks/useTheme";
 import { useWeather } from "./hooks/useWeather";
 import ParkingMap from "./components/ParkingMap";
@@ -31,8 +30,9 @@ export default function App() {
   const [poiLayers, setPoiLayers] = useState<Set<POICategory>>(new Set());
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
 
+  const [mobileOverlayOpen, setMobileOverlayOpen] = useState(false);
+
   const isMobile = useIsMobile();
-  const bottomSheet = useBottomSheet();
   const { theme, toggleTheme } = useTheme();
   const weather = useWeather();
 
@@ -50,12 +50,10 @@ export default function App() {
 
   useEffect(() => {
     if (!isMobile) return;
-    if (selectedParking) {
-      bottomSheet.setSheetState("full");
-    } else {
-      bottomSheet.setSheetState("half");
+    if (selectedParking || selectedPOI) {
+      setMobileOverlayOpen(true);
     }
-  }, [selectedParking, isMobile]);
+  }, [selectedParking, selectedPOI, isMobile]);
 
   const handleLocateMe = useCallback(() => {
     if (!navigator.geolocation) {
@@ -107,9 +105,10 @@ export default function App() {
   const handleMapClick = useCallback(() => {
     setSelectedPOI(null);
     if (isMobile) {
-      bottomSheet.setSheetState("closed");
+      setMobileOverlayOpen(false);
+      setSelectedParking(null);
     }
-  }, [isMobile, bottomSheet]);
+  }, [isMobile]);
 
   return (
     <div className="app-layout">
@@ -126,7 +125,8 @@ export default function App() {
         onLocateMe={handleLocateMe}
         onRefresh={refresh}
         isMobile={isMobile}
-        bottomSheet={isMobile ? bottomSheet : undefined}
+        mobileOverlayOpen={mobileOverlayOpen}
+        onMobileOverlayChange={setMobileOverlayOpen}
         collapsed={!isMobile && sidebarCollapsed}
         onToggleCollapse={toggleSidebar}
         poiLayers={poiLayers}

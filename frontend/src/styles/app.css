@@ -1258,10 +1258,6 @@ body {
 }
 
 /* === Light theme overrides === */
-[data-theme="light"] .sidebar-mobile {
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
-}
-
 [data-theme="light"] .parking-marker:not(.parking-marker-triangle) div,
 [data-theme="light"] .poi-marker div {
   border-color: #374151 !important;
@@ -1326,7 +1322,7 @@ body {
   color: var(--text-secondary);
 }
 
-/* === Mobile Responsive - Bottom Sheet === */
+/* === Mobile Layout === */
 @media (max-width: 768px) {
   .app-layout {
     flex-direction: column;
@@ -1342,81 +1338,170 @@ body {
     z-index: 1;
   }
 
-  .sidebar-mobile {
-    position: fixed;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: 100vh;
-    border-right: none;
-    border-top: none;
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
-    z-index: 20;
-    will-change: transform;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    touch-action: pan-y;
-  }
-
-  .drag-handle {
-    width: 36px;
-    height: 4px;
-    background: var(--text-muted);
-    border-radius: 2px;
-    margin: 10px auto 6px;
-    flex-shrink: 0;
-    cursor: grab;
-    touch-action: none;
-  }
-
-  .drag-handle:active {
-    cursor: grabbing;
-    background: var(--text-secondary);
-  }
-
-  .sheet-collapsed-stats {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-secondary);
-  }
-
-  .sheet-collapsed-dot {
-    color: var(--text-muted);
+  /* Hide desktop sidebar on mobile */
+  .sidebar {
+    display: none;
   }
 
   .sidebar-collapse-btn {
     display: none;
   }
 
-  .sidebar-header {
+  /* === Mobile Bottom Bar (frosted glass) === */
+  .mobile-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: rgba(26, 29, 39, 0.78);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-radius: 14px 14px 0 0;
+    padding: 6px 16px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  [data-theme="light"] .mobile-bar {
+    background: rgba(245, 246, 248, 0.78);
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.08);
+  }
+
+  .mobile-bar:active {
+    opacity: 0.85;
+  }
+
+  .mobile-bar-pill {
+    width: 36px;
+    height: 5px;
+    background: var(--text-muted);
+    border-radius: 3px;
+    margin: 0 auto 8px;
+    opacity: 0.3;
+  }
+
+  .mobile-bar-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  .mobile-bar-value {
+    font-weight: 700;
+  }
+
+  .mobile-bar-label {
+    font-weight: 400;
+    color: var(--text-secondary);
+  }
+
+  .mobile-bar-dot {
+    color: var(--text-muted);
+    margin: 0 2px;
+  }
+
+  .mobile-bar-weather {
+    font-weight: 600;
+  }
+
+  /* === Mobile Overlay (full-screen panel) === */
+  .mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+  }
+
+  .mobile-overlay.open {
+    transform: translateY(0);
+  }
+
+  .mobile-overlay-header {
     padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
   }
 
-  .logo {
-    margin-bottom: 10px;
+  .mobile-overlay-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
   }
 
-  .logo h1 {
-    font-size: 16px;
+  .mobile-overlay-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
-  .sidebar-controls {
-    padding: 10px 16px;
+  .mobile-overlay-title h1 {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .mobile-overlay-actions {
+    display: flex;
+    align-items: center;
     gap: 8px;
   }
 
-  .parking-list {
-    padding: 4px 8px;
+  .mobile-close-btn {
+    background: var(--bg-card);
+    border: none;
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 36px;
+  }
+
+  .mobile-close-btn:active {
+    opacity: 0.6;
+  }
+
+  .mobile-overlay-body {
+    flex: 1;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  .detail-panel {
-    -webkit-overflow-scrolling: touch;
+  /* Inside overlay, parking-list should not have its own scroll */
+  .mobile-overlay-body .parking-list {
+    flex: initial;
+    overflow-y: visible;
+  }
+
+  .mobile-overlay-body .detail-panel {
+    flex: initial;
+    overflow-y: visible;
+  }
+
+  .mobile-overlay .sidebar-footer {
+    flex-shrink: 0;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-overlay .sidebar-controls {
+    padding: 10px 16px;
+    gap: 8px;
   }
 
   /* Touch targets */
@@ -1424,12 +1509,30 @@ body {
   .filter-pill,
   .navigate-btn,
   .nearest-banner-nav,
-  .detail-back {
+  .detail-back,
+  .mobile-close-btn {
     min-height: 44px;
+  }
+
+  .filter-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-pills-poi {
+    flex-wrap: nowrap;
   }
 
   .filter-pill {
     padding: 8px 14px;
+    flex-shrink: 0;
   }
 
   /* Prevent iOS zoom on input focus */

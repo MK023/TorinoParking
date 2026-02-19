@@ -25,7 +25,7 @@ const pills: PillDef[] = [
 ];
 
 export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer }: Props) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   const activeCount = pills.filter((p) => filters[p.key]).length
     + (poiLayers?.size ?? 0);

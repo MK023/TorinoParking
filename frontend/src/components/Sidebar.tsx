@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Parking } from "../types/parking";
 import type { POI, POICategory } from "../types/poi";
 import type { Filters as FilterState } from "../hooks/useParkings";
-import type { UseBottomSheetReturn } from "../hooks/useBottomSheet";
 import ParkingCard from "./ParkingCard";
 import ParkingDetail from "./ParkingDetail";
 import Filters from "./Filters";
@@ -11,7 +10,7 @@ import { getNearestParkings } from "./POILayer";
 import { formatDistance } from "../utils/parking";
 import type { Theme } from "../hooks/useTheme";
 import type { Weather } from "../hooks/useWeather";
-import { Search, Crosshair, Refresh, ChevronLeft, ChevronRight, Sun, Moon } from "./Icons";
+import { Search, LocateArrow, Refresh, ChevronLeft, ChevronRight, Sun, Moon } from "./Icons";
 
 interface Props {
   parkings: Parking[];
@@ -26,7 +25,8 @@ interface Props {
   onLocateMe: () => void;
   onRefresh: () => void;
   isMobile: boolean;
-  bottomSheet?: UseBottomSheetReturn;
+  mobileOverlayOpen?: boolean;
+  onMobileOverlayChange?: (open: boolean) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   poiLayers?: Set<POICategory>;
@@ -51,7 +51,8 @@ export default function Sidebar({
   onLocateMe,
   onRefresh,
   isMobile,
-  bottomSheet,
+  mobileOverlayOpen,
+  onMobileOverlayChange,
   collapsed,
   onToggleCollapse,
   poiLayers,
@@ -71,28 +72,205 @@ export default function Sidebar({
   const availableCount = allParkings.filter((p) => p.is_available).length;
   const totalSpots = allParkings.reduce((sum, p) => sum + (p.free_spots || 0), 0);
 
-  const mobileStyle = isMobile && bottomSheet
-    ? {
-        transform: `translateY(${bottomSheet.translateY}px)`,
-        transition: bottomSheet.isAnimating ? "transform 300ms ease-out" : "none",
-        height: "100vh",
-        top: 0,
+  // Drag-to-open on mobile bar
+  const dragStartY = useRef<number | null>(null);
+  const barHandlers = {
+    onTouchStart: (e: React.TouchEvent) => {
+      dragStartY.current = e.touches[0].clientY;
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (dragStartY.current === null) return;
+      const delta = dragStartY.current - e.touches[0].clientY;
+      if (delta > 40) {
+        dragStartY.current = null;
+        onMobileOverlayChange?.(true);
       }
-    : undefined;
+    },
+    onTouchEnd: () => {
+      dragStartY.current = null;
+    },
+  };
 
-  return (
-    <aside
-      className={`sidebar${collapsed ? " collapsed" : ""}${isMobile ? " sidebar-mobile" : ""}`}
-      style={mobileStyle}
-      {...(isMobile && bottomSheet ? bottomSheet.handlers : {})}
-    >
-      {!isMobile && (
-        <button className="sidebar-collapse-btn" onClick={onToggleCollapse} title={collapsed ? "Espandi sidebar" : "Comprimi sidebar"}>
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+  const listAndControls = (
+    <>
+      <div className="sidebar-controls">
+        <div className="search-box">
+          <Search />
+          <input
+            type="text"
+            placeholder="Cerca parcheggio..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+          />
+        </div>
+
+        <div className="action-buttons">
+          <button className="btn btn-locate" onClick={onLocateMe} title="Localizzami">
+            <LocateArrow size={14} />
+            Localizzami
+          </button>
+          <button className="btn btn-refresh" onClick={onRefresh} title="Aggiorna dati">
+            <Refresh />
+          </button>
+        </div>
+
+        <Filters filters={filters} onChange={onFilterChange} poiLayers={poiLayers} onTogglePOILayer={onTogglePOILayer} />
+      </div>
+
+      {filters.nearbyMode && filters.userLat !== null && filters.userLng !== null && (
+        <NearestParkingBanner
+          parkings={parkings}
+          userLat={filters.userLat}
+          userLng={filters.userLng}
+          onSelect={onSelect}
+        />
       )}
 
-      {isMobile && <div className="drag-handle" />}
+      {selectedPOI && (
+        <div className="poi-nearby-section">
+          <div className="poi-nearby-header">
+            <span>Parcheggi vicino a <strong>{selectedPOI.name}</strong></span>
+            <button className="poi-nearby-close" onClick={() => onSelectPOI?.(null)}>&#x2715;</button>
+          </div>
+          {getNearestParkings(selectedPOI, parkings).map((p) => (
+            <div
+              key={p.id}
+              className="poi-nearby-item"
+              onClick={() => onSelect(p)}
+            >
+              <span className="poi-nearby-name">{p.name}</span>
+              <span className="poi-nearby-meta">
+                {p.free_spots} posti &middot; {formatDistance(p.distance)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="parking-list">
+        {loading && <div className="loading-spinner">Caricamento...</div>}
+        {error && <div className="error-message">{error}</div>}
+        {!loading && !error && filtered.length === 0 && (
+          <div className="empty-state">Nessun parcheggio trovato</div>
+        )}
+        {filtered.map((p) => (
+          <ParkingCard key={p.id} parking={p} onClick={() => onSelect(p)} />
+        ))}
+      </div>
+    </>
+  );
+
+  // ===== MOBILE =====
+  if (isMobile) {
+    return (
+      <>
+        {/* Fixed bottom bar - always visible when overlay closed */}
+        {!mobileOverlayOpen && (
+          <div
+            className="mobile-bar"
+            onClick={() => onMobileOverlayChange?.(true)}
+            {...barHandlers}
+          >
+            <div className="mobile-bar-pill" />
+            <div className="mobile-bar-stats">
+              <span className="mobile-bar-value">{availableCount}</span>
+              <span className="mobile-bar-label">aperti</span>
+              <span className="mobile-bar-dot">&middot;</span>
+              <span className="mobile-bar-value">{totalSpots.toLocaleString()}</span>
+              <span className="mobile-bar-label">posti liberi</span>
+              {weather && (
+                <>
+                  <span className="mobile-bar-dot">&middot;</span>
+                  <span className="mobile-bar-weather">{weather.icon} {weather.temperature}°</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Full-screen overlay */}
+        <div className={`mobile-overlay${mobileOverlayOpen ? " open" : ""}`}>
+          <header className="mobile-overlay-header">
+            <div className="mobile-overlay-top">
+              <div className="mobile-overlay-title">
+                <span className="logo-icon">P</span>
+                <h1>Torino Parking</h1>
+              </div>
+              <div className="mobile-overlay-actions">
+                {onToggleTheme && (
+                  <button
+                    className="theme-toggle"
+                    onClick={onToggleTheme}
+                    title={theme === "dark" ? "Tema chiaro" : "Tema scuro"}
+                  >
+                    {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                  </button>
+                )}
+                <button
+                  className="mobile-close-btn"
+                  onClick={() => {
+                    onMobileOverlayChange?.(false);
+                    onSelect(null);
+                  }}
+                >
+                  Chiudi
+                </button>
+              </div>
+            </div>
+            <div className="stats-row">
+              <div className="stat">
+                <span className="stat-value">{allParkings.length}</span>
+                <span className="stat-label">parcheggi</span>
+              </div>
+              <div className="stat">
+                <span className="stat-value">{availableCount}</span>
+                <span className="stat-label">aperti</span>
+              </div>
+              <div className="stat">
+                <span className="stat-value">{totalSpots.toLocaleString()}</span>
+                <span className="stat-label">posti liberi</span>
+              </div>
+            </div>
+            {weather && (
+              <div className="weather-bar">
+                <span className="weather-icon">{weather.icon}</span>
+                <span className="weather-temp">{weather.temperature}°C</span>
+                <span className="weather-label">{weather.label}</span>
+                <span className="weather-city">Torino</span>
+              </div>
+            )}
+          </header>
+
+          <div className="mobile-overlay-body">
+            {selectedParking ? (
+              <ParkingDetail parking={selectedParking} onBack={() => onSelect(null)} />
+            ) : (
+              listAndControls
+            )}
+          </div>
+
+          <footer className="sidebar-footer">
+            {lastUpdate && (
+              <span>
+                Aggiornato: {new Date(lastUpdate).toLocaleTimeString("it-IT")}
+              </span>
+            )}
+            <span>Dati: 5T Torino Open Data</span>
+          </footer>
+        </div>
+      </>
+    );
+  }
+
+  // ===== DESKTOP =====
+  return (
+    <aside className={`sidebar${collapsed ? " collapsed" : ""}`}>
+      <button className="sidebar-collapse-btn" onClick={onToggleCollapse} title={collapsed ? "Espandi sidebar" : "Comprimi sidebar"}>
+        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+      </button>
 
       {collapsed ? (
         <div className="sidebar-collapsed-icons">
@@ -103,18 +281,6 @@ export default function Sidebar({
             <>
               <span className="collapsed-weather-icon">{weather.icon}</span>
               <span className="collapsed-weather-temp">{weather.temperature}°</span>
-            </>
-          )}
-        </div>
-      ) : isMobile && bottomSheet?.sheetState === "closed" ? (
-        <div className="sheet-collapsed-stats">
-          <span>{availableCount} aperti</span>
-          <span className="sheet-collapsed-dot">&middot;</span>
-          <span>{totalSpots.toLocaleString()} posti liberi</span>
-          {weather && (
-            <>
-              <span className="sheet-collapsed-dot">&middot;</span>
-              <span className="sheet-weather">{weather.icon} {weather.temperature}°</span>
             </>
           )}
         </div>
@@ -164,72 +330,7 @@ export default function Sidebar({
           {selectedParking ? (
             <ParkingDetail parking={selectedParking} onBack={() => onSelect(null)} />
           ) : (
-            <>
-              <div className="sidebar-controls">
-                <div className="search-box">
-                  <Search />
-                  <input
-                    type="text"
-                    placeholder="Cerca parcheggio..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-
-                <div className="action-buttons">
-                  <button className="btn btn-locate" onClick={onLocateMe} title="Trova vicino a me">
-                    <Crosshair />
-                    Vicino a me
-                  </button>
-                  <button className="btn btn-refresh" onClick={onRefresh} title="Aggiorna dati">
-                    <Refresh />
-                  </button>
-                </div>
-
-                <Filters filters={filters} onChange={onFilterChange} poiLayers={poiLayers} onTogglePOILayer={onTogglePOILayer} />
-              </div>
-
-              {filters.nearbyMode && filters.userLat !== null && filters.userLng !== null && (
-                <NearestParkingBanner
-                  parkings={parkings}
-                  userLat={filters.userLat}
-                  userLng={filters.userLng}
-                  onSelect={onSelect}
-                />
-              )}
-
-              {selectedPOI && (
-                <div className="poi-nearby-section">
-                  <div className="poi-nearby-header">
-                    <span>Parcheggi vicino a <strong>{selectedPOI.name}</strong></span>
-                    <button className="poi-nearby-close" onClick={() => onSelectPOI?.(null)}>&#x2715;</button>
-                  </div>
-                  {getNearestParkings(selectedPOI, parkings).map((p) => (
-                    <div
-                      key={p.id}
-                      className="poi-nearby-item"
-                      onClick={() => onSelect(p)}
-                    >
-                      <span className="poi-nearby-name">{p.name}</span>
-                      <span className="poi-nearby-meta">
-                        {p.free_spots} posti &middot; {formatDistance(p.distance)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="parking-list">
-                {loading && <div className="loading-spinner">Caricamento...</div>}
-                {error && <div className="error-message">{error}</div>}
-                {!loading && !error && filtered.length === 0 && (
-                  <div className="empty-state">Nessun parcheggio trovato</div>
-                )}
-                {filtered.map((p) => (
-                  <ParkingCard key={p.id} parking={p} onClick={() => onSelect(p)} />
-                ))}
-              </div>
-            </>
+            listAndControls
           )}
 
           <footer className="sidebar-footer">

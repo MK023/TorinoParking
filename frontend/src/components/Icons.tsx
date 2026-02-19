@@ -169,6 +169,14 @@ export function Crosshair(p: IconProps) {
   );
 }
 
+export function LocateArrow(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <polygon points="3 11 22 2 13 21 11 13 3 11" fill="currentColor" />
+    </Svg>
+  );
+}
+
 export function Refresh(p: IconProps) {
   return (
     <Svg {...p}>
