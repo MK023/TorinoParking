@@ -1563,8 +1563,8 @@ body {
   }
 
   .mobile-overlay-header {
-    padding: 12px 16px;
-    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding: 10px 16px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     position: relative;
@@ -1585,7 +1585,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .mobile-overlay-title {
@@ -1648,12 +1648,12 @@ body {
   }
 
   .mobile-detail-pill {
-    width: 36px;
+    width: 40px;
     height: 5px;
     background: var(--text-muted);
     border-radius: 3px;
-    margin: 8px auto 0;
-    opacity: 0.35;
+    margin: 10px auto 4px;
+    opacity: 0.45;
   }
 
   .mobile-overlay .sidebar-footer {
@@ -1664,6 +1664,38 @@ body {
   .mobile-overlay .sidebar-controls {
     padding: 10px 16px;
     gap: 8px;
+  }
+
+  /* Compact stats on mobile */
+  .mobile-overlay .stats-row {
+    gap: 3px;
+  }
+
+  .mobile-overlay .stat {
+    padding: 6px 4px;
+  }
+
+  .mobile-overlay .stat-value {
+    font-size: 17px;
+  }
+
+  .mobile-overlay .stat-label {
+    font-size: 9px;
+  }
+
+  /* Compact weather on mobile */
+  .mobile-overlay .weather-bar {
+    margin-top: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .mobile-overlay .weather-icon {
+    font-size: 16px;
+  }
+
+  .mobile-overlay .weather-temp {
+    font-size: 14px;
   }
 
   /* Touch targets */
@@ -1708,10 +1740,65 @@ body {
   }
 
   .detail-spots-big {
-    padding: 12px 0;
+    padding: 10px 0;
+  }
+
+  .detail-panel {
+    padding: 12px 16px;
+  }
+
+  .detail-back {
+    margin-bottom: 8px;
+  }
+
+  .detail-header {
+    margin-bottom: 12px;
+  }
+
+  .navigate-btn {
+    margin-bottom: 14px;
+  }
+
+  .detail-info-grid {
+    margin-bottom: 14px;
+    gap: 10px;
   }
 
   :root {
     --sidebar-width: 100%;
+  }
+}
+
+/* === Extra compact for short screens (iPhone SE, etc.) === */
+@media (max-width: 768px) and (max-height: 700px) {
+  .mobile-overlay .stat-value {
+    font-size: 15px;
+  }
+
+  .mobile-overlay .stat {
+    padding: 5px 3px;
+  }
+
+  .big-number {
+    font-size: 38px;
+  }
+
+  .detail-spots-big {
+    padding: 6px 0;
+  }
+
+  .big-label {
+    font-size: 12px;
+  }
+
+  .mobile-overlay-title .logo-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+
+  .mobile-overlay-title h1 {
+    font-size: 15px;
   }
 }
