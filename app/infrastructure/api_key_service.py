@@ -19,7 +19,7 @@ from app.infrastructure.db_models import ApiKeyEntity
 
 def hash_api_key(raw_key: str) -> str:
     """Derive a hex SHA-256 HMAC from *raw_key* using a configurable salt."""
-    return hmac.new(settings.hmac_salt.encode(), raw_key.encode(), hashlib.sha256).hexdigest()
+    return hmac.digest(settings.hmac_salt.encode(), raw_key.encode(), "sha256").hex()
 
 
 def generate_raw_key() -> str:
