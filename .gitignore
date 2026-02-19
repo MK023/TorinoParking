@@ -74,8 +74,13 @@ frontend/dist-ssr/
 # === Claude Code ===
 .claude/
 
-# === Playwright / Screenshots ===
-scripts/*.png
+# === Screenshots / Images ===
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+img/
 scripts/.playwright-mcp/
 .playwright/
 
