@@ -297,7 +297,7 @@ body {
   flex-direction: column;
   border-right: 1px solid var(--border);
   z-index: 10;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   transition: width 300ms ease;
 }
@@ -454,12 +454,10 @@ body {
   border-color: var(--accent);
 }
 
-.btn-locate {
-  padding: 8px 10px;
-}
-
+.btn-locate,
 .btn-refresh {
-  padding: 8px 10px;
+  flex: 1;
+  justify-content: center;
 }
 
 /* === Filter Pills === */
