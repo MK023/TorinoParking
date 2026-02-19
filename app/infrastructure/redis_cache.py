@@ -62,7 +62,7 @@ class RedisCache:
     async def set_with_etag(self, key: str, value: dict, ttl: int | None = None) -> str:
         try:
             encoded = self._encode(value)
-            etag = hashlib.md5(encoded).hexdigest()  # noqa: S324
+            etag = hashlib.md5(encoded, usedforsecurity=False).hexdigest()
             async with self._pool.pipeline(transaction=True) as pipe:
                 pipe.set(key, encoded, ex=ttl or self._default_ttl)
                 pipe.set(f"{key}:etag", etag, ex=ttl or self._default_ttl)
