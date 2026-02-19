@@ -6,15 +6,39 @@ COMPOSE_FILE="$PROJECT_DIR/docker-compose.yml"
 
 echo "==> Avvio TorinoParking..."
 
-# Check .env exists
-if [ ! -f "$PROJECT_DIR/.env" ]; then
-  echo "ERRORE: file .env non trovato in $PROJECT_DIR"
-  echo "Copia .env.example in .env e configura le variabili."
-  exit 1
+# Determine secrets source: Doppler or .env
+USE_DOPPLER=false
+if command -v doppler &> /dev/null; then
+  if doppler secrets --project torino-parking --config dev > /dev/null 2>&1; then
+    USE_DOPPLER=true
+    echo "    Secrets: Doppler (progetto torino-parking, config dev)"
+  fi
 fi
 
-# Build and start (--build rebuilds only if Dockerfile or context changed)
-docker compose -f "$COMPOSE_FILE" up -d --build
+if [ "$USE_DOPPLER" = false ]; then
+  if [ ! -f "$PROJECT_DIR/.env" ]; then
+    echo "ERRORE: Doppler non configurato e file .env non trovato in $PROJECT_DIR"
+    echo "Opzioni:"
+    echo "  1. Installa e configura Doppler: brew install dopplerhq/cli/doppler && doppler login"
+    echo "  2. Copia .env.example in .env e configura le variabili"
+    exit 1
+  fi
+  echo "    Secrets: file .env"
+fi
+
+# Generate frontend/.env from Doppler (Vite needs it for import.meta.env)
+if [ "$USE_DOPPLER" = true ]; then
+  doppler secrets get VITE_MAPBOX_TOKEN --plain --project torino-parking --config dev 2>/dev/null | \
+    xargs -I{} sh -c 'echo "VITE_MAPBOX_TOKEN={}" > "$1/frontend/.env"' -- "$PROJECT_DIR"
+  echo "    Frontend .env generato da Doppler"
+fi
+
+# Build and start
+if [ "$USE_DOPPLER" = true ]; then
+  doppler run --project torino-parking --config dev -- docker compose -f "$COMPOSE_FILE" up -d --build
+else
+  docker compose -f "$COMPOSE_FILE" up -d --build
+fi
 
 echo ""
 echo "==> In attesa che i servizi siano pronti..."
@@ -74,3 +98,7 @@ echo "    Frontend:  http://localhost:3000"
 echo "    Backend:   http://localhost:8000"
 echo "    API docs:  http://localhost:8000/docs"
 echo "    Dockhand:  http://localhost:9000"
+if [ "$USE_DOPPLER" = true ]; then
+  echo ""
+  echo "    Secrets gestiti da Doppler"
+fi
