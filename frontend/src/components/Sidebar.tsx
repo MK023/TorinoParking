@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { Parking } from "../types/parking";
 import type { POI, POICategory } from "../types/poi";
 import type { Filters as FilterState } from "../hooks/useParkings";
@@ -90,6 +90,52 @@ export default function Sidebar({
       dragStartY.current = null;
     },
   };
+
+  // Swipe-down to dismiss detail (iOS style)
+  const [swipeY, setSwipeY] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const swipeStartY = useRef<number | null>(null);
+  const swipeStartScroll = useRef(0);
+  const overlayBodyRef = useRef<HTMLDivElement | null>(null);
+
+  const onDetailTouchStart = useCallback((e: React.TouchEvent) => {
+    swipeStartY.current = e.touches[0].clientY;
+    swipeStartScroll.current = overlayBodyRef.current?.scrollTop ?? 0;
+  }, []);
+
+  const onDetailTouchMove = useCallback((e: React.TouchEvent) => {
+    if (swipeStartY.current === null) return;
+    const scrollTop = overlayBodyRef.current?.scrollTop ?? 0;
+    // Only start swipe if scrolled to top
+    if (scrollTop > 0) {
+      swipeStartY.current = null;
+      return;
+    }
+    const delta = e.touches[0].clientY - swipeStartY.current;
+    if (delta > 0) {
+      // Swiping down - apply resistance
+      const dampened = Math.pow(delta, 0.75);
+      setSwipeY(dampened);
+      setSwiping(true);
+    }
+  }, []);
+
+  const onDetailTouchEnd = useCallback(() => {
+    if (swipeY > 120) {
+      // Dismiss
+      setSwipeY(window.innerHeight);
+      setTimeout(() => {
+        onSelect(null);
+        setSwipeY(0);
+        setSwiping(false);
+      }, 250);
+    } else {
+      // Spring back
+      setSwipeY(0);
+      setSwiping(false);
+    }
+    swipeStartY.current = null;
+  }, [swipeY, onSelect]);
 
   const listAndControls = (
     <>
@@ -243,9 +289,21 @@ export default function Sidebar({
             )}
           </header>
 
-          <div className="mobile-overlay-body">
+          <div className="mobile-overlay-body" ref={overlayBodyRef}>
             {selectedParking ? (
-              <ParkingDetail parking={selectedParking} onBack={() => onSelect(null)} />
+              <div
+                className="mobile-detail-swipe"
+                style={{
+                  transform: swipeY > 0 ? `translateY(${swipeY}px)` : undefined,
+                  transition: swiping ? "none" : "transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
+                }}
+                onTouchStart={onDetailTouchStart}
+                onTouchMove={onDetailTouchMove}
+                onTouchEnd={onDetailTouchEnd}
+              >
+                <div className="mobile-detail-pill" />
+                <ParkingDetail parking={selectedParking} onBack={() => onSelect(null)} />
+              </div>
             ) : (
               listAndControls
             )}

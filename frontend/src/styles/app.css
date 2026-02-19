@@ -1640,6 +1640,22 @@ body {
     overflow-y: visible;
   }
 
+  /* Swipe-to-dismiss detail */
+  .mobile-detail-swipe {
+    min-height: 100%;
+    will-change: transform;
+    position: relative;
+  }
+
+  .mobile-detail-pill {
+    width: 36px;
+    height: 5px;
+    background: var(--text-muted);
+    border-radius: 3px;
+    margin: 8px auto 0;
+    opacity: 0.35;
+  }
+
   .mobile-overlay .sidebar-footer {
     flex-shrink: 0;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
