@@ -36,9 +36,7 @@ async def _populate_cache(client):
     try:
         await pool.delete(PARKINGS_CACHE_KEY)
         with respx.mock:
-            respx.get(settings.five_t_api_url).mock(
-                return_value=Response(200, text=MOCK_XML)
-            )
+            respx.get(settings.five_t_api_url).mock(return_value=Response(200, text=MOCK_XML))
             from app.scheduler import fetch_parking_data
 
             await fetch_parking_data(

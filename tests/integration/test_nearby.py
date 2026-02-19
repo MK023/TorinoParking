@@ -31,9 +31,7 @@ async def _seed_parkings(db_session):
 
 @pytest.mark.asyncio
 async def test_nearby_returns_close_parkings(client, _seed_parkings):
-    resp = await client.get(
-        "/api/v1/parkings/nearby?lat=45.0703&lng=7.6869&radius=500"
-    )
+    resp = await client.get("/api/v1/parkings/nearby?lat=45.0703&lng=7.6869&radius=500")
     assert resp.status_code == 200
     body = resp.json()
     ids = [p["id"] for p in body["parkings"]]
@@ -50,9 +48,7 @@ async def test_nearby_requires_lat_lng(client):
 
 @pytest.mark.asyncio
 async def test_nearby_empty_when_none_in_radius(client, _seed_parkings):
-    resp = await client.get(
-        "/api/v1/parkings/nearby?lat=40.0&lng=10.0&radius=100"
-    )
+    resp = await client.get("/api/v1/parkings/nearby?lat=40.0&lng=10.0&radius=100")
     assert resp.status_code == 200
     body = resp.json()
     assert body["total"] == 0

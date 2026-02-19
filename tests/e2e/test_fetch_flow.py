@@ -33,9 +33,7 @@ async def test_full_fetch_to_api_flow(client, _create_tables):
 
         # Mock the external 5T API
         with respx.mock:
-            respx.get(settings.five_t_api_url).mock(
-                return_value=Response(200, text=MOCK_5T_XML)
-            )
+            respx.get(settings.five_t_api_url).mock(return_value=Response(200, text=MOCK_5T_XML))
 
             # Run the scheduler job directly
             from app.scheduler import fetch_parking_data

@@ -111,15 +111,9 @@ def _create_tables():
 
     async def _setup():
         async with test_engine.begin() as conn:
-            await conn.execute(
-                sqlalchemy.text("DROP SCHEMA public CASCADE")
-            )
-            await conn.execute(
-                sqlalchemy.text("CREATE SCHEMA public")
-            )
-            await conn.execute(
-                sqlalchemy.text("CREATE EXTENSION IF NOT EXISTS postgis")
-            )
+            await conn.execute(sqlalchemy.text("DROP SCHEMA public CASCADE"))
+            await conn.execute(sqlalchemy.text("CREATE SCHEMA public"))
+            await conn.execute(sqlalchemy.text("CREATE EXTENSION IF NOT EXISTS postgis"))
             await conn.run_sync(Base.metadata.create_all)
         # Dispose the pool so connections tied to this event loop are not
         # reused in the test event loops (avoids "Future attached to a
