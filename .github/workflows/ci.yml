@@ -93,3 +93,37 @@ jobs:
           tags: ${{ env.IMAGE_TAG }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: pip install pip-audit bandit
+
+      - name: pip-audit
+        run: pip-audit -r requirements.txt
+
+      - name: Bandit SAST
+        run: bandit -r app/ -c pyproject.toml || true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: npm audit
+        working-directory: frontend
+        run: npm audit --audit-level=high || true
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

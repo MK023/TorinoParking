@@ -12,7 +12,7 @@ import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoiZW1tZWthcHBhMjMiLCJhIjoiY21sdGEzNjMzMGRiOTNmc2c1NjNkajd6dSJ9.u12KMwhY74Krp4vW2HE5cw";
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN ?? "";
 
 const TILE_URLS: Record<Theme, string> = {
   dark: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_TOKEN}`,

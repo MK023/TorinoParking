@@ -47,8 +47,18 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Bottone "Naviga" con deep link Apple Maps / Google Maps
 - [x] Docker container con hot reload
 - [x] Tema chiaro/scuro con rilevamento preferenza sistema + toggle manuale
-- [x] Tile mappa dinamiche (CartoDB dark/light) con switch istantaneo
+- [x] Tile mappa Mapbox (dark-v11 / light-v11) con switch istantaneo al cambio tema
 - [x] Meteo attuale Torino (OpenMeteo) nella barra collassata
+- [x] Filtri per stato parcheggio: Liberi, Pieni, Si riempie, Fuori servizio, Chiusi (pill con colori dedicati, logica OR)
+- [x] Tile mappa Mapbox (dark-v11 / light-v11) con switch istantaneo al cambio tema (replaces "CartoDB dark/light")
+- [x] Clustering marker con react-leaflet-cluster e icone custom
+- [x] Limiti mappa Torino (maxBounds) per impedire navigazione fuori citta
+- [x] Mobile: swipe-down iOS-style per chiudere il dettaglio parcheggio (con resistenza smorzata e spring-back)
+- [x] Mobile: proportions responsive per tutti gli schermi (iPhone SE fino a Pro Max)
+- [x] Mobile: bottom bar frosted-glass con stats e meteo compatti
+- [x] Token Mapbox spostato in variabile d'ambiente VITE_MAPBOX_TOKEN (non piu' hardcoded)
+- [x] Sidebar desktop collassabile con pulsante centrato verticalmente
+- [x] Font Apple SF Pro Display per look nativo iOS
 
 ---
 
@@ -129,11 +139,11 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 ### Mappe native per mobile
 - [ ] Apple Maps su iOS (MapKit JS o app nativa Swift)
 - [ ] Google Maps su Android (Maps SDK)
-- [ ] Transizione da Leaflet/CartoDB a mappe native per UX premium
+- [ ] Transizione da Leaflet/Mapbox dark-v11/light-v11 a mappe native per UX premium
 - [ ] Richiede passaggio a React Native / Capacitor o app nativa
 
 ### Interattivita mappa avanzata
-- [ ] Clustering marker per zoom out
+- [x] Clustering marker per zoom out
 - [ ] Animazioni fluide marker (aggiornamento posti in tempo reale)
 - [ ] 3D buildings su zoom elevato (dove supportato)
 - [ ] Street View integrato per orientarsi all'arrivo

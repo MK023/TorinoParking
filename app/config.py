@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     admin_api_key: str = ""
 
-    hmac_salt: str = "torino-parking-api-key-salt-v1"
+    hmac_salt: str = ""
 
     five_t_api_url: str = "https://opendata.5t.torino.it/get_pk"
     five_t_timeout: int = 10

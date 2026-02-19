@@ -9,13 +9,14 @@ Documento di architettura del sistema.
 ## Overview Sistema
 
 ```
-┌─────────────┐
-│ Mobile App  │
-│ iOS/Android │
-└──────┬──────┘
-       │ HTTPS/JSON
-       │ API Key
-       ▼
+┌─────────────┐     ┌─────────────────────┐
+│ Mobile/Web  │     │  React Frontend     │
+│  Browser    │     │  (Vite + TypeScript) │
+└──────┬──────┘     └──────────┬──────────┘
+       │ HTTPS/JSON            │ localhost:3000
+       └──────────┬────────────┘
+                  │
+                  ▼
 ┌──────────────────────────────────┐
 │      FastAPI Backend             │
 │  ┌────────────────────────────┐  │
@@ -220,6 +221,12 @@ Max memory: 512MB
 │  │  redis (container)       │  │
 │  │  Port: 6379              │  │
 │  │  Volume: redis_data      │  │
+│  └──────────────────────────┘  │
+│                                │
+│  ┌──────────────────────────┐  │
+│  │  frontend (container)    │  │
+│  │  React 19 + Vite 7       │  │
+│  │  Port: 3000              │  │
 │  └──────────────────────────┘  │
 │                                │
 │  ┌──────────────────────────┐  │
