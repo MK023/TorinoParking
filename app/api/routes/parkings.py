@@ -81,10 +81,7 @@ async def get_parkings(
     if available is not None:
         filtered = [p for p in filtered if p.is_available == available]
     if min_spots is not None:
-        filtered = [
-            p for p in filtered
-            if p.free_spots is not None and p.free_spots >= min_spots
-        ]
+        filtered = [p for p in filtered if p.free_spots is not None and p.free_spots >= min_spots]
 
     result = ParkingListResponse(
         total=len(filtered),
@@ -129,23 +126,13 @@ async def get_nearby_parkings(
         if live:
             # Use live data enriched with detail from DB join
             detail_dict = (
-                ParkingDetailSchema.model_validate(e.detail).model_dump()
-                if e.detail
-                else None
+                ParkingDetailSchema.model_validate(e.detail).model_dump() if e.detail else None
             )
-            merged_detail = (
-                ParkingDetailSchema(**detail_dict)
-                if detail_dict
-                else live.detail
-            )
-            parkings.append(
-                live.model_copy(update={"detail": merged_detail})
-            )
+            merged_detail = ParkingDetailSchema(**detail_dict) if detail_dict else live.detail
+            parkings.append(live.model_copy(update={"detail": merged_detail}))
         else:
             detail_dict = (
-                ParkingDetailSchema.model_validate(e.detail).model_dump()
-                if e.detail
-                else None
+                ParkingDetailSchema.model_validate(e.detail).model_dump() if e.detail else None
             )
             parkings.append(
                 ParkingSchema(

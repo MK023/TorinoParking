@@ -56,9 +56,7 @@ class ParkingSchema(BaseModel):
     detail: ParkingDetailSchema | None = None
 
     @classmethod
-    def from_domain(
-        cls, parking: Parking, detail: dict | None = None
-    ) -> ParkingSchema:
+    def from_domain(cls, parking: Parking, detail: dict | None = None) -> ParkingSchema:
         return cls(
             id=parking.id,
             name=parking.name,

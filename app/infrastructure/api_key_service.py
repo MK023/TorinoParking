@@ -73,9 +73,7 @@ class ApiKeyService:
     async def revoke_key(self, key_id: int) -> bool:
         """Deactivate a key.  Returns *True* if found."""
         result = await self._session.execute(
-            update(ApiKeyEntity)
-            .where(ApiKeyEntity.id == key_id)
-            .values(is_active=False)
+            update(ApiKeyEntity).where(ApiKeyEntity.id == key_id).values(is_active=False)
         )
         await self._session.commit()
         return result.rowcount > 0

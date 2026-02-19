@@ -7,7 +7,8 @@ SQLAlchemy statements to prevent injection.
 
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import insert, select, text
+from geoalchemy2 import Geography
+from sqlalchemy import cast, func, insert, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -22,22 +23,27 @@ class ParkingDBRepository:
 
     async def upsert_parking_metadata(self, parkings: list[Parking]) -> int:
         for p in parkings:
-            stmt = pg_insert(ParkingEntity).values(
-                id=p.id,
-                name=p.name,
-                total_spots=p.total_spots,
-                lat=p.lat,
-                lng=p.lng,
-                location=f"SRID=4326;POINT({p.lng} {p.lat})",
-            ).on_conflict_do_update(
-                index_elements=["id"],
-                set_={
-                    "name": p.name,
-                    "total_spots": p.total_spots,
-                    "lat": p.lat,
-                    "lng": p.lng,
-                    "location": f"SRID=4326;POINT({p.lng} {p.lat})",
-                },
+            geo = func.ST_SetSRID(func.ST_MakePoint(p.lng, p.lat), 4326)
+            stmt = (
+                pg_insert(ParkingEntity)
+                .values(
+                    id=p.id,
+                    name=p.name,
+                    total_spots=p.total_spots,
+                    lat=p.lat,
+                    lng=p.lng,
+                    location=geo,
+                )
+                .on_conflict_do_update(
+                    index_elements=["id"],
+                    set_={
+                        "name": p.name,
+                        "total_spots": p.total_spots,
+                        "lat": p.lat,
+                        "lng": p.lng,
+                        "location": geo,
+                    },
+                )
             )
             await self._session.execute(stmt)
         await self._session.flush()
@@ -64,20 +70,17 @@ class ParkingDBRepository:
         self, lat: float, lng: float, radius_meters: int = 1000, limit: int = 10
     ) -> list[ParkingEntity]:
         """Spatial query: parkings within *radius_meters*, with detail joined."""
-        point = f"SRID=4326;POINT({lng} {lat})"
+        point = cast(func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326), Geography)
         stmt = (
             select(ParkingEntity)
             .options(joinedload(ParkingEntity.detail))
-            .where(text("ST_DWithin(location, ST_GeogFromText(:point), :radius)"))
-            .params(point=point, radius=radius_meters)
+            .where(func.ST_DWithin(ParkingEntity.location, point, radius_meters))
             .limit(limit)
         )
         result = await self._session.execute(stmt)
         return list(result.unique().scalars().all())
 
-    async def get_history(
-        self, parking_id: int, hours: int = 24
-    ) -> list[ParkingSnapshot]:
+    async def get_history(self, parking_id: int, hours: int = 24) -> list[ParkingSnapshot]:
         """Return snapshots for a parking within the last N hours."""
         cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
         stmt = (

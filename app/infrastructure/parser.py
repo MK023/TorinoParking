@@ -29,7 +29,7 @@ class ParkingXMLParser:
                 lng=float(pk["@lng"]),
             )
         except (KeyError, ValueError, TypeError) as e:
-            logger.warning("parse_parking_failed", error=str(e), raw_data=pk)
+            logger.warning("parse_parking_failed", error=str(e), parking_id=pk.get("@ID"))
             return None
 
     @classmethod

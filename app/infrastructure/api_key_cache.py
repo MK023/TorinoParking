@@ -23,9 +23,7 @@ async def refresh() -> None:
     global _cache, _last_refresh
     async with async_session_factory() as session:
         result = await session.execute(
-            select(ApiKeyEntity.key_hash, ApiKeyEntity.tier).where(
-                ApiKeyEntity.is_active.is_(True)
-            )
+            select(ApiKeyEntity.key_hash, ApiKeyEntity.tier).where(ApiKeyEntity.is_active.is_(True))
         )
         _cache = {row.key_hash: row.tier for row in result.all()}
     _last_refresh = time.monotonic()

@@ -6,6 +6,7 @@ by Redis.
 """
 
 import logging
+import re
 import time
 import uuid
 
@@ -22,10 +23,13 @@ logger = structlog.get_logger()
 access_logger = logging.getLogger("access")
 _struct_access = structlog.wrap_logger(access_logger)
 
+_REQUEST_ID_RE = re.compile(r"^[\w\-]{1,64}$")
+
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
-        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        client_id = request.headers.get("X-Request-ID", "")
+        request_id = client_id if _REQUEST_ID_RE.match(client_id) else str(uuid.uuid4())
         structlog.contextvars.bind_contextvars(request_id=request_id)
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
@@ -51,33 +55,37 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     SKIP_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
+    _ADMIN_RATE_LIMIT = 30
 
     async def dispatch(self, request: Request, call_next) -> Response:
         if request.url.path in self.SKIP_PATHS:
             return await call_next(request)
 
-        if request.url.path.startswith("/api/v1/admin"):
-            return await call_next(request)
-
         pool = request.app.state.redis_pool
         limiter = RateLimiter(pool)
-        api_key = request.headers.get("X-API-Key")
+        client_ip = request.client.host if request.client else "unknown"
 
-        tier: str | None = None
-        if api_key:
-            from app.infrastructure.api_key_cache import lookup
-
-            tier = await lookup(api_key)
-
-        if tier == "premium":
-            identifier = f"premium:{api_key[:8]}"
-            max_requests = settings.rate_limit_premium
-        elif tier is not None:
-            identifier = f"auth:{api_key[:8]}"
-            max_requests = settings.rate_limit_authenticated
+        if request.url.path.startswith("/api/v1/admin"):
+            identifier = f"admin:{client_ip}"
+            max_requests = self._ADMIN_RATE_LIMIT
         else:
-            identifier = f"ip:{request.client.host if request.client else 'unknown'}"
-            max_requests = settings.rate_limit_anonymous
+            api_key = request.headers.get("X-API-Key")
+
+            tier: str | None = None
+            if api_key:
+                from app.infrastructure.api_key_cache import lookup
+
+                tier = await lookup(api_key)
+
+            if tier == "premium":
+                identifier = f"premium:{api_key[:8]}"
+                max_requests = settings.rate_limit_premium
+            elif tier is not None:
+                identifier = f"auth:{api_key[:8]}"
+                max_requests = settings.rate_limit_authenticated
+            else:
+                identifier = f"ip:{client_ip}"
+                max_requests = settings.rate_limit_anonymous
 
         try:
             allowed, remaining, reset_at = await limiter.check(identifier, max_requests)
@@ -110,4 +118,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Cache-Control"] = "no-store"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         return response

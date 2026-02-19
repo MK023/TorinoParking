@@ -12,7 +12,7 @@ import redis.asyncio as aioredis
 import structlog
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlalchemy import insert, select, text
+from sqlalchemy import func, insert, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.api.schemas import ParkingDetailSchema, ParkingSchema
@@ -44,10 +44,7 @@ async def _load_details_map() -> dict[int, dict]:
     async with async_session_factory() as session:
         result = await session.execute(select(ParkingDetailEntity))
         details = result.scalars().all()
-    return {
-        d.parking_id: ParkingDetailSchema.model_validate(d).model_dump()
-        for d in details
-    }
+    return {d.parking_id: ParkingDetailSchema.model_validate(d).model_dump() for d in details}
 
 
 async def fetch_parking_data(
@@ -56,9 +53,7 @@ async def fetch_parking_data(
 ) -> None:
     """Fetch parking data from 5T, store snapshots, merge detail, update cache."""
     try:
-        response = await http_client.get(
-            settings.five_t_api_url, timeout=settings.five_t_timeout
-        )
+        response = await http_client.get(settings.five_t_api_url, timeout=settings.five_t_timeout)
         response.raise_for_status()
 
         parser = ParkingXMLParser()
@@ -68,10 +63,7 @@ async def fetch_parking_data(
         details_map = await _load_details_map()
 
         # Build enriched schemas with detail
-        schemas = [
-            ParkingSchema.from_domain(p, detail=details_map.get(p.id))
-            for p in parkings
-        ]
+        schemas = [ParkingSchema.from_domain(p, detail=details_map.get(p.id)) for p in parkings]
         cache_data = {
             "total": len(schemas),
             "last_update": datetime.now(timezone.utc).isoformat(),
@@ -90,22 +82,27 @@ async def fetch_parking_data(
         now = datetime.now(timezone.utc)
         async with async_session_factory() as session:
             for p in parkings:
-                stmt = pg_insert(ParkingEntity).values(
-                    id=p.id,
-                    name=p.name,
-                    total_spots=p.total_spots,
-                    lat=p.lat,
-                    lng=p.lng,
-                    location=f"SRID=4326;POINT({p.lng} {p.lat})",
-                ).on_conflict_do_update(
-                    index_elements=["id"],
-                    set_={
-                        "name": p.name,
-                        "total_spots": p.total_spots,
-                        "lat": p.lat,
-                        "lng": p.lng,
-                        "location": f"SRID=4326;POINT({p.lng} {p.lat})",
-                    },
+                geo = func.ST_SetSRID(func.ST_MakePoint(p.lng, p.lat), 4326)
+                stmt = (
+                    pg_insert(ParkingEntity)
+                    .values(
+                        id=p.id,
+                        name=p.name,
+                        total_spots=p.total_spots,
+                        lat=p.lat,
+                        lng=p.lng,
+                        location=geo,
+                    )
+                    .on_conflict_do_update(
+                        index_elements=["id"],
+                        set_={
+                            "name": p.name,
+                            "total_spots": p.total_spots,
+                            "lat": p.lat,
+                            "lng": p.lng,
+                            "location": geo,
+                        },
+                    )
                 )
                 await session.execute(stmt)
             await session.flush()

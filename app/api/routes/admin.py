@@ -5,9 +5,10 @@ All endpoints require the ``X-Admin-Key`` header to match the
 """
 
 import hmac
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_db_session
@@ -18,15 +19,13 @@ router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
 def _verify_admin(x_admin_key: str = Header(...)) -> None:
-    if not settings.admin_api_key or not hmac.compare_digest(
-        x_admin_key, settings.admin_api_key
-    ):
+    if not settings.admin_api_key or not hmac.compare_digest(x_admin_key, settings.admin_api_key):
         raise HTTPException(status_code=403, detail="Invalid admin key")
 
 
 class CreateKeyRequest(BaseModel):
-    name: str
-    tier: str = "authenticated"
+    name: str = Field(..., max_length=100)
+    tier: Literal["authenticated", "premium"] = "authenticated"
 
 
 class KeyResponse(BaseModel):

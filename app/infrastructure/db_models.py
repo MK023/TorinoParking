@@ -46,9 +46,7 @@ class ParkingEntity(Base):
         back_populates="parking", lazy="joined", uselist=False
     )
 
-    __table_args__ = (
-        Index("idx_parkings_location", "location", postgresql_using="gist"),
-    )
+    __table_args__ = (Index("idx_parkings_location", "location", postgresql_using="gist"),)
 
 
 class ParkingDetailEntity(Base):
@@ -56,9 +54,7 @@ class ParkingDetailEntity(Base):
 
     __tablename__ = "parking_details"
 
-    parking_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("parkings.id"), primary_key=True
-    )
+    parking_id: Mapped[int] = mapped_column(Integer, ForeignKey("parkings.id"), primary_key=True)
     address: Mapped[str] = mapped_column(String(500), nullable=False, server_default="")
     district: Mapped[str] = mapped_column(String(100), nullable=False, server_default="")
     operator: Mapped[str] = mapped_column(String(100), nullable=False, server_default="GTT")
@@ -87,9 +83,7 @@ class ParkingSnapshot(Base):
     __tablename__ = "parking_snapshots"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    parking_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("parkings.id"), nullable=False
-    )
+    parking_id: Mapped[int] = mapped_column(Integer, ForeignKey("parkings.id"), nullable=False)
     free_spots: Mapped[int | None] = mapped_column(Integer, nullable=True)
     total_spots: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -115,6 +109,4 @@ class ApiKeyEntity(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-    last_used_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
