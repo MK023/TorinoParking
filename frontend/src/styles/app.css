@@ -43,11 +43,13 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
   height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -77,6 +79,39 @@ body {
 .user-marker {
   background: none !important;
   border: none !important;
+}
+
+/* Apple Maps style pulsating user position */
+@keyframes user-pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(3.5); opacity: 0; }
+}
+
+.user-marker div {
+  position: relative;
+}
+
+.user-marker div::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.35);
+  animation: user-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Subtle hover scale on parking markers */
+.parking-marker > div {
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.parking-marker:hover > div {
+  transform: scale(1.15);
+  filter: brightness(1.1);
 }
 
 /* === Map Legend === */
@@ -197,20 +232,35 @@ body {
   margin: 1px;
 }
 
-/* Fix leaflet popup for dark theme */
+/* Leaflet popup - Apple style */
 .leaflet-popup-content-wrapper {
   background: var(--bg-card) !important;
   color: var(--text-primary) !important;
-  border-radius: var(--radius) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,255,0.06) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-content {
+  margin: 10px 14px !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
 }
 
 .leaflet-popup-tip {
   background: var(--bg-card) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 .leaflet-popup-close-button {
-  color: var(--text-secondary) !important;
+  color: var(--text-muted) !important;
+  font-size: 20px !important;
+  top: 6px !important;
+  right: 8px !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: var(--text-primary) !important;
 }
 
 /* === Sidebar === */
@@ -230,6 +280,18 @@ body {
 .sidebar-header {
   padding: 20px;
   border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.sidebar-header::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0.3;
 }
 
 .logo {
@@ -242,7 +304,7 @@ body {
 .logo-icon {
   width: 40px;
   height: 40px;
-  background: var(--accent);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -250,6 +312,7 @@ body {
   font-weight: 800;
   font-size: 18px;
   color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .logo h1 {
@@ -274,6 +337,15 @@ body {
   padding: 8px 4px;
   background: var(--bg-card);
   border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.stat:nth-child(2) {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), var(--bg-card));
+}
+
+.stat:nth-child(2) .stat-value {
+  color: var(--green);
 }
 
 .stat-value {
@@ -311,6 +383,7 @@ body {
 
 .search-box:focus-within {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .search-box svg {
@@ -487,11 +560,18 @@ body {
   margin-bottom: 4px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  border-left: 3px solid transparent;
 }
 
 .parking-card:hover {
   background: var(--bg-hover);
+  transform: translateX(2px);
+  border-left-color: var(--accent);
+}
+
+.parking-card:active {
+  transform: scale(0.98);
 }
 
 .parking-card-header {
@@ -568,7 +648,7 @@ body {
 .parking-card-bar-fill {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.5s ease;
+  transition: width 0.8s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .parking-card-footer {
@@ -584,13 +664,14 @@ body {
 }
 
 .has-detail-badge {
-  background: var(--accent);
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
   color: white;
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
   font-size: 9px;
   font-weight: 700;
   margin-left: auto;
+  letter-spacing: 0.3px;
 }
 
 .parking-card-tags {
@@ -677,6 +758,7 @@ body {
   font-weight: 800;
   line-height: 1;
   display: block;
+  letter-spacing: -2px;
 }
 
 .big-label {
@@ -697,7 +779,7 @@ body {
 .detail-bar-fill {
   height: 100%;
   border-radius: 4px;
-  transition: width 0.5s ease;
+  transition: width 0.8s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .detail-bar-label {
@@ -730,19 +812,25 @@ body {
   min-height: 44px;
   padding: 10px 16px;
   margin-bottom: 20px;
-  background: var(--accent);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .navigate-btn:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.navigate-btn:active {
+  transform: scale(0.97);
 }
 
 /* === Detail Info Grid === */
@@ -1179,9 +1267,10 @@ body {
   gap: 8px;
   margin-top: 12px;
   padding: 8px 12px;
-  background: var(--bg-card);
-  border-radius: 8px;
+  background: linear-gradient(135deg, var(--bg-card), rgba(59, 130, 246, 0.04));
+  border-radius: 10px;
   font-size: 13px;
+  border: 1px solid var(--border);
 }
 
 .weather-icon {
@@ -1354,19 +1443,22 @@ body {
     left: 0;
     right: 0;
     z-index: 20;
-    background: rgba(26, 29, 39, 0.78);
+    background: rgba(26, 29, 39, 0.82);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
-    border-radius: 14px 14px 0 0;
-    padding: 6px 16px;
+    border-radius: 16px 16px 0 0;
+    padding: 8px 16px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.15);
+    border-top: 0.5px solid rgba(255, 255, 255, 0.08);
   }
 
   [data-theme="light"] .mobile-bar {
-    background: rgba(245, 246, 248, 0.78);
-    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.08);
+    border-top: 0.5px solid rgba(0, 0, 0, 0.06);
   }
 
   .mobile-bar:active {
@@ -1434,6 +1526,18 @@ body {
     padding-top: calc(12px + env(safe-area-inset-top, 0px));
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
+    position: relative;
+  }
+
+  .mobile-overlay-header::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 16px;
+    right: 16px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.2;
   }
 
   .mobile-overlay-top {
@@ -1461,7 +1565,7 @@ body {
   }
 
   .mobile-close-btn {
-    background: var(--bg-card);
+    background: rgba(59, 130, 246, 0.12);
     border: none;
     color: var(--accent);
     font-size: 15px;
@@ -1471,10 +1575,11 @@ body {
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     min-height: 36px;
+    transition: background 0.2s ease;
   }
 
   .mobile-close-btn:active {
-    opacity: 0.6;
+    background: rgba(59, 130, 246, 0.2);
   }
 
   .mobile-overlay-body {

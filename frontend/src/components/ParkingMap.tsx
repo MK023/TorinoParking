@@ -192,14 +192,14 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
           icon={L.divIcon({
             className: "user-marker",
             html: `<div style="
-              width: 16px; height: 16px;
-              background: #3b82f6;
+              width: 18px; height: 18px;
+              background: linear-gradient(135deg, #60a5fa, #3b82f6);
               border: 3px solid white;
               border-radius: 50%;
-              box-shadow: 0 0 12px rgba(59,130,246,0.6);
+              box-shadow: 0 0 12px rgba(59,130,246,0.5), 0 2px 4px rgba(0,0,0,0.2);
             "></div>`,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8],
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
           })}
         />
       )}
@@ -224,15 +224,23 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
               eventHandlers={{ click: () => onSelect(p) }}
             >
               <Popup>
-                <div style={{ minWidth: 180 }}>
-                  <strong>{p.name}</strong>
-                  <div style={{ margin: "6px 0", fontSize: 13 }}>
+                <div style={{ minWidth: 200 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <strong style={{ fontSize: 14 }}>{p.name}</strong>
+                    {p.free_spots !== null && (
+                      <span style={{
+                        fontSize: 18, fontWeight: 800, color: getStatusColor(p),
+                        letterSpacing: -1, lineHeight: 1,
+                      }}>{p.free_spots}</span>
+                    )}
+                  </div>
+                  <div style={{ margin: "6px 0", fontSize: 12 }}>
                     {p.is_available ? (
-                      <span style={{ color: "#22c55e" }}>
+                      <span style={{ color: "var(--text-secondary)" }}>
                         {p.free_spots} / {p.total_spots} posti liberi
                       </span>
                     ) : (
-                      <span style={{ color: "#ef4444" }}>{p.status_label}</span>
+                      <span style={{ color: "#ef4444", fontWeight: 600 }}>{p.status_label}</span>
                     )}
                     {tendence.icon && (
                       <span style={{ fontSize: 11, opacity: 0.7 }}>
@@ -242,23 +250,23 @@ export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect
                   </div>
                   {p.occupancy_percentage !== null && (
                     <div style={{
-                      height: 6,
+                      height: 5,
                       background: "var(--border)",
                       borderRadius: 3,
                       overflow: "hidden",
-                      marginTop: 4,
+                      marginTop: 6,
                     }}>
                       <div style={{
                         height: "100%",
                         width: `${p.occupancy_percentage}%`,
                         background: getStatusColor(p),
                         borderRadius: 3,
-                        transition: "width 0.5s",
+                        transition: "width 0.8s cubic-bezier(0.32, 0.72, 0, 1)",
                       }} />
                     </div>
                   )}
                   {p.detail?.address && (
-                    <div style={{ fontSize: 11, marginTop: 6, opacity: 0.7 }}>
+                    <div style={{ fontSize: 11, marginTop: 8, color: "var(--text-muted)" }}>
                       {p.detail.address}
                     </div>
                   )}
