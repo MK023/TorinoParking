@@ -64,54 +64,60 @@ export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer
 
       {expanded && (
         <>
-          <div className="filter-pills filter-pills-status">
+          <div className="filter-group">
             <span className="filter-group-label">Stato</span>
-            {statusPills.map((sp) => (
-              <button
-                key={sp.key}
-                className={`filter-pill filter-pill-status${filters.statusFilters.includes(sp.key) ? " active" : ""}`}
-                style={filters.statusFilters.includes(sp.key) ? { background: sp.color, borderColor: sp.color } : undefined}
-                onClick={() => toggleStatus(sp.key)}
-              >
-                <span className="filter-status-dot" style={{ background: sp.color }} />
-                {sp.label}
-              </button>
-            ))}
+            <div className="filter-pills filter-pills-status">
+              {statusPills.map((sp) => (
+                <button
+                  key={sp.key}
+                  className={`filter-pill filter-pill-status${filters.statusFilters.includes(sp.key) ? " active" : ""}`}
+                  style={filters.statusFilters.includes(sp.key) ? { background: sp.color, borderColor: sp.color } : undefined}
+                  onClick={() => toggleStatus(sp.key)}
+                >
+                  <span className="filter-status-dot" style={{ background: sp.color }} />
+                  {sp.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="filter-pills">
+          <div className="filter-group">
             <span className="filter-group-label">Servizi</span>
-            {pills.map((pill) => (
-              <button
-                key={pill.key}
-                className={`filter-pill${filters[pill.key] ? " active" : ""}`}
-                onClick={() =>
-                  onChange({ ...filters, [pill.key]: !filters[pill.key] })
-                }
-              >
-                {pill.icon}
-                {pill.label}
-              </button>
-            ))}
+            <div className="filter-pills">
+              {pills.map((pill) => (
+                <button
+                  key={pill.key}
+                  className={`filter-pill${filters[pill.key] ? " active" : ""}`}
+                  onClick={() =>
+                    onChange({ ...filters, [pill.key]: !filters[pill.key] })
+                  }
+                >
+                  {pill.icon}
+                  {pill.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {onTogglePOILayer && (
-            <div className="filter-pills filter-pills-poi">
+            <div className="filter-group">
               <span className="filter-group-label">Punti di interesse</span>
-              <button
-                className={`filter-pill filter-pill-hospital${poiLayers?.has("hospital") ? " active" : ""}`}
-                onClick={() => onTogglePOILayer("hospital")}
-              >
-                <Hospital size={14} />
-                Ospedali
-              </button>
-              <button
-                className={`filter-pill filter-pill-university${poiLayers?.has("university") ? " active" : ""}`}
-                onClick={() => onTogglePOILayer("university")}
-              >
-                <GraduationCap size={14} />
-                Università
-              </button>
+              <div className="filter-pills filter-pills-poi">
+                <button
+                  className={`filter-pill filter-pill-hospital${poiLayers?.has("hospital") ? " active" : ""}`}
+                  onClick={() => onTogglePOILayer("hospital")}
+                >
+                  <Hospital size={14} />
+                  Ospedali
+                </button>
+                <button
+                  className={`filter-pill filter-pill-university${poiLayers?.has("university") ? " active" : ""}`}
+                  onClick={() => onTogglePOILayer("university")}
+                >
+                  <GraduationCap size={14} />
+                  Università
+                </button>
+              </div>
             </div>
           )}
         </>

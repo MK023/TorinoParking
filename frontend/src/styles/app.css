@@ -1226,7 +1226,8 @@ body {
 .sidebar-collapse-btn {
   position: absolute;
   right: -16px;
-  top: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -1326,17 +1327,18 @@ body {
 }
 
 /* === Filter Groups === */
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .filter-group-label {
   font-size: 10px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
-  width: 100%;
-}
-
-.filter-pills-poi {
-  padding-top: 4px;
 }
 
 .filter-status-dot {
