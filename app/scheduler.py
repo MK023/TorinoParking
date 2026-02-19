@@ -129,7 +129,7 @@ async def fetch_parking_data(
         logger.error("fetch_parking_data_error", exc_info=True)
 
 
-async def cleanup_expired_cache(redis_pool: aioredis.Redis) -> None:
+async def log_cache_stats(redis_pool: aioredis.Redis) -> None:
     """Log Redis memory stats."""
     try:
         info = await redis_pool.info("memory")
@@ -140,7 +140,7 @@ async def cleanup_expired_cache(redis_pool: aioredis.Redis) -> None:
             keys=keys,
         )
     except Exception:
-        logger.error("cleanup_cache_error", exc_info=True)
+        logger.error("cache_stats_error", exc_info=True)
 
 
 async def purge_old_snapshots() -> None:
@@ -180,11 +180,11 @@ def configure_scheduler(
     )
 
     scheduler.add_job(
-        cleanup_expired_cache,
+        log_cache_stats,
         "cron",
         minute=0,
         args=[redis_pool],
-        id="cleanup_expired_cache",
+        id="log_cache_stats",
         max_instances=1,
         replace_existing=True,
     )

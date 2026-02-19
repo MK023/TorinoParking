@@ -65,7 +65,7 @@ DEBUG=true
 
 # === Security ===
 ADMIN_API_KEY=your-admin-secret-key-min-32-characters-here
-HMAC_SALT=torino-parking-api-key-salt-v1
+HMAC_SALT=  # Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 # === Database ===
 DATABASE_URL=postgresql+asyncpg://parking:parking123@postgres:5432/parking
@@ -119,7 +119,7 @@ docker-compose up -d --build
 - `backend` - FastAPI API + APScheduler (porta 8000)
 - `postgres` - PostgreSQL + PostGIS (porta 5432)
 - `redis` - Cache e rate limiting (porta 6379)
-- `dockhand` - Docker management UI (porta 3000)
+- `dockhand` - Docker management UI (porta 9000, profilo `tools`)
 
 ### 3. Dockhand Setup (Opzionale ma raccomandato)
 

@@ -1,16 +1,59 @@
+# ===========================
+# Backend Docker context
+# ===========================
+
+# Git
 .git
 .gitignore
+
+# Environment & Secrets
 .env
 .env.*
 !.env.example
+
+# Python
 __pycache__
 *.pyc
+*.pyo
 venv/
 .venv/
-.DS_Store
-*.md
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Frontend (built separately)
+frontend/
+node_modules/
+
+# Docker
 docker-compose*.yml
-.claude/
-firebase-debug.log
-tests/
+Dockerfile
+.dockerignore
+
+# Docs & Config
+*.md
 docs/
+.claude/
+.doppler/
+.github/
+
+# IDE
+.vscode/
+.idea/
+
+# Scripts & Misc
+scripts/
+postman/
+img/
+*.png
+*.log
+firebase-debug.log
+
+# Tests (not needed in production image)
+tests/
+
+# OS
+.DS_Store
+Thumbs.db

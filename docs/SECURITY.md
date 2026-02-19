@@ -36,7 +36,7 @@ Documento su sicurezza, threat modeling e linee guida.
 **Mitigazioni implementate:**
 - API key validation su endpoint sensibili
 - Rate limiting multi-tier (IP, API key, user)
-- RBAC per admin endpoints
+- Admin API key protection on sensitive endpoints
 - Dependency injection per authorization
 
 **Esempio:**

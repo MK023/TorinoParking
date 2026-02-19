@@ -104,12 +104,14 @@ services:
       - parking-network
     restart: unless-stopped
 
-  # Dockhand - Docker Management UI
+  # Dockhand - Docker Management UI (dev tool)
+  # Start with: docker compose --profile tools up -d
   dockhand:
     image: fnsys/dockhand:latest
     container_name: parking_dockhand
+    profiles: ["tools"]
     ports:
-      - "9000:3000"
+      - "127.0.0.1:9000:3000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - dockhand_data:/app/data

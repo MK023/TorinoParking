@@ -50,7 +50,6 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [x] Tile mappa Mapbox (dark-v11 / light-v11) con switch istantaneo al cambio tema
 - [x] Meteo attuale Torino (OpenMeteo) nella barra collassata
 - [x] Filtri per stato parcheggio: Liberi, Pieni, Si riempie, Fuori servizio, Chiusi (pill con colori dedicati, logica OR)
-- [x] Tile mappa Mapbox (dark-v11 / light-v11) con switch istantaneo al cambio tema (replaces "CartoDB dark/light")
 - [x] Clustering marker con react-leaflet-cluster e icone custom
 - [x] Limiti mappa Torino (maxBounds) per impedire navigazione fuori citta
 - [x] Mobile: swipe-down iOS-style per chiudere il dettaglio parcheggio (con resistenza smorzata e spring-back)

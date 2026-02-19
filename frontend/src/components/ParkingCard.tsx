@@ -60,8 +60,8 @@ export default function ParkingCard({ parking, onClick }: Props) {
             {tendence.icon} {tendence.text}
           </span>
         )}
-        {d && (
-          <span className="has-detail-badge">GTT</span>
+        {d?.operator && (
+          <span className="has-detail-badge">{d.operator}</span>
         )}
       </div>
 

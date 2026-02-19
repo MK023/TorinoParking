@@ -122,9 +122,10 @@ interface FlyToProps {
 
 function FlyTo({ center, zoom }: FlyToProps) {
   const map = useMap();
+  const [lat, lng] = center;
   useEffect(() => {
-    map.flyTo(center, zoom, { duration: 1.2 });
-  }, [map, center[0], center[1], zoom]);
+    map.flyTo([lat, lng], zoom, { duration: 1.2 });
+  }, [map, lat, lng, zoom]);
   return null;
 }
 
@@ -156,7 +157,7 @@ interface Props {
   theme?: Theme;
 }
 
-export default function ParkingMap({ parkings, selectedId: _selectedId, onSelect, userPosition, onMapClick, pois, activePOILayers, selectedPOI, onSelectPOI, theme = "dark" }: Props) {
+export default function ParkingMap({ parkings, onSelect, userPosition, onMapClick, pois, activePOILayers, selectedPOI, onSelectPOI, theme = "dark" }: Props) {
   const flyTarget = userPosition || TORINO_CENTER;
   const flyZoom = userPosition ? 15 : DEFAULT_ZOOM;
 

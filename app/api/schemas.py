@@ -38,6 +38,8 @@ class ParkingDetailSchema(BaseModel):
 
 
 class ParkingSchema(BaseModel):
+    """Real-time parking data enriched with optional static detail."""
+
     model_config = {"from_attributes": True}
 
     id: int

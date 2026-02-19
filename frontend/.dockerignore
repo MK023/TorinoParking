@@ -1,3 +1,30 @@
-node_modules
-dist
+# ===========================
+# Frontend Docker context
+# ===========================
+
+# Git
 .git
+.gitignore
+
+# Dependencies (reinstalled in container)
+node_modules
+
+# Build output
+dist
+dist-ssr
+
+# Environment & Secrets
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.md
+*.log

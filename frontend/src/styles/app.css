@@ -529,21 +529,6 @@ body {
   color: white;
 }
 
-.filter-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.filter-toggle input[type="checkbox"] {
-  accent-color: var(--accent);
-  width: 16px;
-  height: 16px;
-}
-
 .filter-range {
   display: flex;
   flex-direction: column;
@@ -1280,10 +1265,6 @@ body {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
-}
-
-.sheet-weather {
-  font-weight: 600;
 }
 
 .weather-bar {

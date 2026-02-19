@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.domain.models import Parking
-from app.infrastructure.db_models import ParkingDetailEntity, ParkingEntity, ParkingSnapshot
+from app.infrastructure.db_models import ParkingEntity, ParkingSnapshot
 
 
 class ParkingDBRepository:
@@ -90,8 +90,3 @@ class ParkingDBRepository:
         )
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
-
-    async def get_all_details(self) -> dict[int, ParkingDetailEntity]:
-        """Load all detail rows in a single query, keyed by parking_id."""
-        result = await self._session.execute(select(ParkingDetailEntity))
-        return {d.parking_id: d for d in result.scalars().all()}

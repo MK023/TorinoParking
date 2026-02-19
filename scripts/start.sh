@@ -28,9 +28,13 @@ fi
 
 # Generate frontend/.env from Doppler (Vite needs it for import.meta.env)
 if [ "$USE_DOPPLER" = true ]; then
-  doppler secrets get VITE_MAPBOX_TOKEN --plain --project torino-parking --config dev 2>/dev/null | \
-    xargs -I{} sh -c 'echo "VITE_MAPBOX_TOKEN={}" > "$1/frontend/.env"' -- "$PROJECT_DIR"
-  echo "    Frontend .env generato da Doppler"
+  MAPBOX_TOKEN=$(doppler secrets get VITE_MAPBOX_TOKEN --plain --project torino-parking --config dev 2>/dev/null) || true
+  if [ -n "$MAPBOX_TOKEN" ]; then
+    echo "VITE_MAPBOX_TOKEN=$MAPBOX_TOKEN" > "$PROJECT_DIR/frontend/.env"
+    echo "    Frontend .env generato da Doppler"
+  else
+    echo "    ATTENZIONE: VITE_MAPBOX_TOKEN non trovato in Doppler"
+  fi
 fi
 
 # Build and start
@@ -97,7 +101,7 @@ echo "==> TorinoParking avviato!"
 echo "    Frontend:  http://localhost:3000"
 echo "    Backend:   http://localhost:8000"
 echo "    API docs:  http://localhost:8000/docs"
-echo "    Dockhand:  http://localhost:9000"
+echo "    Dockhand:  docker compose --profile tools up -d"
 if [ "$USE_DOPPLER" = true ]; then
   echo ""
   echo "    Secrets gestiti da Doppler"

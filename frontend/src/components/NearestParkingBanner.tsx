@@ -35,7 +35,7 @@ export default function NearestParkingBanner({ parkings, userLat, userLng, onSel
 
   return (
     <div className="nearest-banner" onClick={() => onSelect(nearest)}>
-      <div className="nearest-banner-header">Parcheggio libero piu vicino</div>
+      <div className="nearest-banner-header">Parcheggio libero più vicino</div>
       <div className="nearest-banner-body">
         <div className="nearest-banner-info">
           <span className="nearest-banner-name">{nearest.name}</span>

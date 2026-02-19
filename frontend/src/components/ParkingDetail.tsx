@@ -108,7 +108,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
         Torna alla lista
       </button>
 
-      {/* 1. Header */}
       <div className="detail-header">
         <h2>{parking.name}</h2>
         <span className="detail-status-badge" style={{ background: color }}>
@@ -116,7 +115,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
         </span>
       </div>
 
-      {/* 2. Availability */}
       <div className="detail-spots-big">
         {parking.free_spots !== null ? (
           <>
@@ -153,7 +151,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
         </div>
       )}
 
-      {/* 3. Navigate button */}
       {parking.lat && parking.lng && (
         <a
           className="navigate-btn"
@@ -168,7 +165,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
 
       {d ? (
         <div className="detail-info-grid">
-          {/* 4. Location + operator + floors */}
           {(d.address || d.district) && (
             <div className="detail-row">
               <span className="detail-icon"><MapPin size={16} /></span>
@@ -198,7 +194,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
             </div>
           )}
 
-          {/* 5. Rates grid */}
           {hasRates && (
             <div className="detail-section">
               <span className="detail-section-title">Tariffe</span>
@@ -243,7 +238,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
             </div>
           )}
 
-          {/* 6. Payment badges */}
           {d.payment_methods.length > 0 && (
             <div className="detail-section">
               <span className="detail-section-title">Pagamento</span>
@@ -258,7 +252,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
             </div>
           )}
 
-          {/* 7. Transport */}
           {(d.bus_lines.length > 0 || d.has_metro_access) && (
             <div className="detail-row">
               <span className="detail-icon"><Bus size={16} /></span>
@@ -276,7 +269,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
             </div>
           )}
 
-          {/* 8. Features */}
           {hasTags && (
             <div className="detail-section">
               <span className="detail-section-title">Caratteristiche</span>
@@ -300,7 +292,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
             </div>
           )}
 
-          {/* 9. Notes */}
           {d.notes && <p className="detail-notes">{d.notes}</p>}
         </div>
       ) : (
@@ -309,7 +300,6 @@ export default function ParkingDetail({ parking, onBack }: Props) {
         </p>
       )}
 
-      {/* 10. History chart */}
       <div className="detail-history">
         <h3>Storico (6h)</h3>
         {loadingHistory ? (
@@ -320,7 +310,7 @@ export default function ParkingDetail({ parking, onBack }: Props) {
           <div className="history-chart">
             {hourBuckets.map((b, i) => (
               <div
-                key={i}
+                key={b.timestamp}
                 className="history-bar-wrapper"
                 onClick={() => setTooltipIdx(tooltipIdx === i ? null : i)}
               >
