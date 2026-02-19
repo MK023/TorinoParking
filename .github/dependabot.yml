@@ -10,6 +10,11 @@ updates:
     labels:
       - "dependencies"
       - "python"
+    groups:
+      python-minor:
+        update-types:
+          - "minor"
+          - "patch"
 
   # npm - frontend dependencies
   - package-ecosystem: "npm"
@@ -21,6 +26,11 @@ updates:
     labels:
       - "dependencies"
       - "javascript"
+    groups:
+      npm-minor:
+        update-types:
+          - "minor"
+          - "patch"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -32,6 +42,12 @@ updates:
     labels:
       - "dependencies"
       - "ci"
+    groups:
+      actions:
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
 
   # Docker
   - package-ecosystem: "docker"
