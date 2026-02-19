@@ -108,9 +108,8 @@ export default function Sidebar({
         </div>
 
         <div className="action-buttons">
-          <button className="btn btn-locate" onClick={onLocateMe} title="Localizzami">
+          <button className="btn btn-locate" onClick={onLocateMe} title="La mia posizione">
             <LocateArrow size={14} />
-            Localizzami
           </button>
           <button className="btn btn-refresh" onClick={onRefresh} title="Aggiorna dati">
             <Refresh />

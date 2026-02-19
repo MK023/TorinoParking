@@ -6,6 +6,8 @@ const REFRESH_NORMAL = 120_000;          // 2 minutes
 const REFRESH_NEARBY = 30_000;           // 30 seconds
 const NEARBY_BOOST_DURATION = 300_000;   // 5 minutes
 
+export type StatusFilter = "free" | "full" | "outOfService" | "closed" | "fillingUp";
+
 export interface Filters {
   onlyAvailable: boolean;
   minSpots: number;
@@ -17,6 +19,7 @@ export interface Filters {
   electronicPayment: boolean;
   covered: boolean;
   metroAccess: boolean;
+  statusFilters: StatusFilter[];
 }
 
 const ELECTRONIC_KEYWORDS = [
@@ -24,7 +27,27 @@ const ELECTRONIC_KEYWORDS = [
   "carta", "pos", "contactless",
 ];
 
+function matchesStatusFilter(p: Parking, sf: StatusFilter): boolean {
+  switch (sf) {
+    case "free":
+      return p.is_available && p.free_spots !== null && p.free_spots > 0 &&
+        (p.occupancy_percentage === null || p.occupancy_percentage < 90);
+    case "full":
+      return p.is_available && (p.free_spots === 0 ||
+        (p.occupancy_percentage !== null && p.occupancy_percentage >= 90));
+    case "outOfService":
+      return !p.is_available && p.status_label === "fuori servizio";
+    case "closed":
+      return !p.is_available && p.status_label !== "fuori servizio";
+    case "fillingUp":
+      return p.is_available && p.tendence !== null && p.tendence < 0;
+  }
+}
+
 function matchesClientFilters(p: Parking, f: Filters): boolean {
+  if (f.statusFilters.length > 0) {
+    if (!f.statusFilters.some((sf) => matchesStatusFilter(p, sf))) return false;
+  }
   if (f.onlyAvailable && !p.is_available) return false;
   if (f.minSpots > 0 && (p.free_spots === null || p.free_spots < f.minSpots))
     return false;
@@ -64,6 +87,7 @@ export function useParkings() {
     electronicPayment: false,
     covered: false,
     metroAccess: false,
+    statusFilters: [],
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);

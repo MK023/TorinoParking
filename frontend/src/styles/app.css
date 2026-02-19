@@ -43,13 +43,15 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  font-family: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
   height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
 #root {
@@ -453,7 +455,7 @@ body {
 }
 
 .btn-locate {
-  flex: 1;
+  padding: 8px 10px;
 }
 
 .btn-refresh {
@@ -1225,11 +1227,10 @@ body {
 
 .sidebar-collapse-btn {
   position: absolute;
-  right: -14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
+  right: -16px;
+  top: 20px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -1239,13 +1240,15 @@ body {
   justify-content: center;
   cursor: pointer;
   z-index: 15;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-collapse-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--accent);
+  color: white;
   border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .sidebar-collapsed-icons {
@@ -1336,6 +1339,21 @@ body {
 
 .filter-pills-poi {
   padding-top: 4px;
+}
+
+.filter-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.filter-pill-status.active .filter-status-dot {
+  background: white !important;
+}
+
+.filter-pills-status {
+  padding-top: 0;
 }
 
 .filter-pill-hospital.active {

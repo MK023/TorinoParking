@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Filters as FilterState } from "../hooks/useParkings";
+import type { Filters as FilterState, StatusFilter } from "../hooks/useParkings";
 import type { POICategory } from "../types/poi";
 import { Accessibility, CreditCard, Roof, Train, Hospital, GraduationCap, ChevronDown } from "./Icons";
 
@@ -17,18 +17,40 @@ interface PillDef {
 }
 
 const pills: PillDef[] = [
-  { key: "onlyAvailable", label: "Disponibili" },
   { key: "disabledSpots", label: "Disabili", icon: <Accessibility size={14} /> },
   { key: "electronicPayment", label: "POS / Carte", icon: <CreditCard size={14} /> },
   { key: "covered", label: "Coperto", icon: <Roof size={14} /> },
   { key: "metroAccess", label: "Metro", icon: <Train size={14} /> },
 ];
 
+interface StatusPillDef {
+  key: StatusFilter;
+  label: string;
+  color: string;
+}
+
+const statusPills: StatusPillDef[] = [
+  { key: "free", label: "Liberi", color: "#22c55e" },
+  { key: "full", label: "Pieni", color: "#ec4899" },
+  { key: "fillingUp", label: "Si riempie", color: "#f59e0b" },
+  { key: "outOfService", label: "Fuori servizio", color: "#dc2626" },
+  { key: "closed", label: "Chiusi", color: "#6b7280" },
+];
+
 export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const activeCount = pills.filter((p) => filters[p.key]).length
+    + filters.statusFilters.length
     + (poiLayers?.size ?? 0);
+
+  const toggleStatus = (key: StatusFilter) => {
+    const current = filters.statusFilters;
+    const next = current.includes(key)
+      ? current.filter((k) => k !== key)
+      : [...current, key];
+    onChange({ ...filters, statusFilters: next });
+  };
 
   return (
     <div className="filters">
@@ -42,7 +64,23 @@ export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer
 
       {expanded && (
         <>
+          <div className="filter-pills filter-pills-status">
+            <span className="filter-group-label">Stato</span>
+            {statusPills.map((sp) => (
+              <button
+                key={sp.key}
+                className={`filter-pill filter-pill-status${filters.statusFilters.includes(sp.key) ? " active" : ""}`}
+                style={filters.statusFilters.includes(sp.key) ? { background: sp.color, borderColor: sp.color } : undefined}
+                onClick={() => toggleStatus(sp.key)}
+              >
+                <span className="filter-status-dot" style={{ background: sp.color }} />
+                {sp.label}
+              </button>
+            ))}
+          </div>
+
           <div className="filter-pills">
+            <span className="filter-group-label">Servizi</span>
             {pills.map((pill) => (
               <button
                 key={pill.key}
