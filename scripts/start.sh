@@ -4,105 +4,87 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 COMPOSE_FILE="$PROJECT_DIR/docker-compose.yml"
 
+# --- Colori ---
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+ok()   { printf "${GREEN}OK${NC}\n"; }
+warn() { printf "${YELLOW}$1${NC}\n"; }
+fail() { printf "${RED}$1${NC}\n"; }
+
 echo "==> Avvio TorinoParking..."
 
-# Determine secrets source: Doppler or .env
+# --- Secrets: Doppler o .env ---
 USE_DOPPLER=false
-if command -v doppler &> /dev/null; then
-  if doppler secrets --project torino-parking --config dev > /dev/null 2>&1; then
-    USE_DOPPLER=true
-    echo "    Secrets: Doppler (progetto torino-parking, config dev)"
-  fi
+if command -v doppler &> /dev/null \
+  && doppler secrets --project torino-parking --config dev > /dev/null 2>&1; then
+  USE_DOPPLER=true
+  echo "    Secrets: Doppler"
+elif [ ! -f "$PROJECT_DIR/.env" ]; then
+  fail "ERRORE: Doppler non configurato e .env non trovato"
+  echo "  1. brew install dopplerhq/cli/doppler && doppler login && doppler setup"
+  echo "  2. cp .env.example .env  (e configura i valori)"
+  exit 1
+else
+  echo "    Secrets: .env"
 fi
 
-if [ "$USE_DOPPLER" = false ]; then
-  if [ ! -f "$PROJECT_DIR/.env" ]; then
-    echo "ERRORE: Doppler non configurato e file .env non trovato in $PROJECT_DIR"
-    echo "Opzioni:"
-    echo "  1. Installa e configura Doppler: brew install dopplerhq/cli/doppler && doppler login"
-    echo "  2. Copia .env.example in .env e configura le variabili"
-    exit 1
-  fi
-  echo "    Secrets: file .env"
-fi
-
-# Generate frontend/.env from Doppler (Vite needs it for import.meta.env)
+# --- Genera frontend/.env da Doppler (Vite lo richiede) ---
 if [ "$USE_DOPPLER" = true ]; then
   MAPBOX_TOKEN=$(doppler secrets get VITE_MAPBOX_TOKEN --plain --project torino-parking --config dev 2>/dev/null) || true
   if [ -n "$MAPBOX_TOKEN" ]; then
     echo "VITE_MAPBOX_TOKEN=$MAPBOX_TOKEN" > "$PROJECT_DIR/frontend/.env"
     echo "    Frontend .env generato da Doppler"
   else
-    echo "    ATTENZIONE: VITE_MAPBOX_TOKEN non trovato in Doppler"
+    warn "    ATTENZIONE: VITE_MAPBOX_TOKEN non trovato in Doppler"
   fi
 fi
 
-# Build and start
+# --- Build e start ---
 if [ "$USE_DOPPLER" = true ]; then
   doppler run --project torino-parking --config dev -- docker compose -f "$COMPOSE_FILE" up -d --build
 else
   docker compose -f "$COMPOSE_FILE" up -d --build
 fi
 
+# --- Health checks ---
 echo ""
-echo "==> In attesa che i servizi siano pronti..."
+echo "==> In attesa dei servizi..."
 
-# Wait for health checks (postgres and redis have healthchecks)
-for service in parking_postgres parking_redis; do
-  printf "    %-20s " "$service"
-  for i in $(seq 1 30); do
-    status=$(docker inspect --format='{{.State.Health.Status}}' "$service" 2>/dev/null || echo "missing")
-    if [ "$status" = "healthy" ]; then
-      echo "OK"
-      break
-    fi
-    if [ "$i" -eq 30 ]; then
-      echo "TIMEOUT (stato: $status)"
-      echo "ERRORE: $service non pronto dopo 30 tentativi."
-      echo "Controlla i log: docker logs $service"
-      exit 1
-    fi
+wait_for_container() {
+  local name=$1 retries=$2
+  printf "    %-20s " "$name"
+  for i in $(seq 1 "$retries"); do
+    status=$(docker inspect --format='{{.State.Health.Status}}' "$name" 2>/dev/null || echo "missing")
+    if [ "$status" = "healthy" ]; then ok; return 0; fi
     sleep 2
   done
-done
+  fail "TIMEOUT"; echo "    docker logs $name"; return 1
+}
 
-# Quick check that backend responds
-printf "    %-20s " "parking_backend"
-for i in $(seq 1 20); do
-  if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
-    echo "OK"
-    break
-  fi
-  if [ "$i" -eq 20 ]; then
-    echo "TIMEOUT"
-    echo "ATTENZIONE: backend non risponde su /health dopo 40s."
-    echo "Controlla i log: docker logs parking_backend"
-  fi
-  sleep 2
-done
+wait_for_http() {
+  local name=$1 url=$2 retries=$3
+  printf "    %-20s " "$name"
+  for i in $(seq 1 "$retries"); do
+    if curl -sf "$url" > /dev/null 2>&1; then ok; return 0; fi
+    sleep 3
+  done
+  warn "TIMEOUT (potrebbe essere ancora in avvio)"
+  echo "    docker logs $name"
+  return 0
+}
 
-# Quick check that frontend responds
-printf "    %-20s " "parking_frontend"
-for i in $(seq 1 15); do
-  if curl -sf http://localhost:3000 > /dev/null 2>&1; then
-    echo "OK"
-    break
-  fi
-  if [ "$i" -eq 15 ]; then
-    echo "TIMEOUT"
-    echo "ATTENZIONE: frontend non risponde su :3000 dopo 30s."
-    echo "Controlla i log: docker logs parking_frontend"
-  fi
-  sleep 2
-done
+wait_for_container parking_postgres 30 || exit 1
+wait_for_container parking_redis 15 || exit 1
+wait_for_http parking_backend http://localhost:8000/health 40
+wait_for_http parking_frontend http://localhost:3000 20
 
+# --- Summary ---
 echo ""
 echo "==> TorinoParking avviato!"
 echo "    Frontend:  http://localhost:3000"
 echo "    Backend:   http://localhost:8000"
 echo "    API docs:  http://localhost:8000/docs"
-echo "    Dockhand:  docker compose --profile tools up -d"
-if [ "$USE_DOPPLER" = true ]; then
-  echo ""
-  echo "    Secrets gestiti da Doppler"
-fi
+[ "$USE_DOPPLER" = true ] && echo "    Secrets:   Doppler"
