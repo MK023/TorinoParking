@@ -1,7 +1,7 @@
 # Shared environment for backend service
 x-backend-env: &backend-env
   DATABASE_URL: ${DATABASE_URL}
-  REDIS_URL: ${REDIS_URL}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
   ADMIN_API_KEY: ${ADMIN_API_KEY}
   ENVIRONMENT: ${ENVIRONMENT}
   DEBUG: ${DEBUG}
@@ -45,18 +45,36 @@ services:
   redis:
     image: redis:7-alpine
     container_name: parking_redis
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--no-auth-warning", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
     networks:
       - parking-network
+
+  # Caddy Reverse Proxy (TLS termination)
+  caddy:
+    image: caddy:2-alpine
+    container_name: parking_caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - parking-network
+    restart: unless-stopped
 
   # FastAPI Backend
   backend:
@@ -65,8 +83,6 @@ services:
       dockerfile: Dockerfile
     container_name: parking_backend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8000:8000"
     environment:
       <<: *backend-env
     volumes:
@@ -89,8 +105,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: parking_frontend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN:-}
     volumes:
@@ -127,4 +143,6 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  caddy_data:
+  caddy_config:
   dockhand_data:

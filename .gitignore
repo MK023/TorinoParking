@@ -71,6 +71,12 @@ node_modules/
 frontend/dist/
 frontend/dist-ssr/
 
+# === Capacitor / iOS ===
+frontend/ios/App/App/public/
+frontend/ios/App/Pods/
+frontend/ios/capacitor-cordova-ios-plugins/
+*.xcuserdatad
+
 # === Claude Code ===
 .claude/
 
