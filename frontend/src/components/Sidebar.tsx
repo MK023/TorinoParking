@@ -8,6 +8,7 @@ import Filters from "./Filters";
 import NearestParkingBanner from "./NearestParkingBanner";
 import { getNearestParkings } from "./POILayer";
 import { formatDistance } from "../utils/parking";
+import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import type { Theme } from "../hooks/useTheme";
 import type { Weather } from "../hooks/useWeather";
 import { Search, LocateArrow, Refresh, ChevronLeft, ChevronRight, Sun, Moon } from "./Icons";
@@ -137,6 +138,9 @@ export default function Sidebar({
     swipeStartY.current = null;
   }, [swipeY, onSelect]);
 
+  const { scrollRef: pullScrollRef, pulling, pullDistance, refreshing, handlers: pullHandlers } =
+    usePullToRefresh({ onRefresh });
+
   const listAndControls = (
     <>
       <div className="sidebar-controls">
@@ -185,6 +189,10 @@ export default function Sidebar({
               key={p.id}
               className="poi-nearby-item"
               onClick={() => onSelect(p)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(p); } }}
+              role="button"
+              tabIndex={0}
+              aria-label={`${p.name}, ${p.free_spots} posti, ${formatDistance(p.distance)}`}
             >
               <span className="poi-nearby-name">{p.name}</span>
               <span className="poi-nearby-meta">
@@ -289,7 +297,28 @@ export default function Sidebar({
             )}
           </header>
 
-          <div className="mobile-overlay-body" ref={overlayBodyRef}>
+          <div
+            className="mobile-overlay-body"
+            ref={(el) => { overlayBodyRef.current = el; pullScrollRef.current = el; }}
+            {...(!selectedParking ? pullHandlers : {})}
+          >
+            {pulling && (
+              <div
+                className="pull-to-refresh-indicator"
+                style={{
+                  height: pullDistance,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "13px",
+                  color: "var(--text-secondary)",
+                  overflow: "hidden",
+                  flexShrink: 0,
+                }}
+              >
+                {refreshing ? "Aggiornamento..." : pullDistance > 80 ? "Rilascia per aggiornare" : "Tira per aggiornare"}
+              </div>
+            )}
             {selectedParking ? (
               <div
                 className="mobile-detail-swipe"
