@@ -28,14 +28,20 @@ const TORINO_BOUNDS: L.LatLngBoundsExpression = [
   [45.14, 7.78],   // nord-est
 ];
 
+const iconCache = new Map<string, L.DivIcon>();
+
 function createIcon(parking: Parking, dimmed = false): L.DivIcon {
+  const cacheKey = `${parking.id}:${parking.free_spots}:${parking.status}:${parking.occupancy_percentage}:${dimmed}`;
+  const cached = iconCache.get(cacheKey);
+  if (cached) return cached;
   const color = getStatusColor(parking);
   const spots = parking.free_spots !== null ? parking.free_spots : "\u2014";
   const nearlyFull = parking.is_available && parking.occupancy_percentage !== null && parking.occupancy_percentage >= 90;
 
+  let icon: L.DivIcon;
+
   if (nearlyFull) {
-    // Triangolo rovesciato per parcheggi quasi esauriti
-    return L.divIcon({
+    icon = L.divIcon({
       className: "parking-marker parking-marker-triangle",
       html: `
         <div style="
@@ -64,32 +70,35 @@ function createIcon(parking: Parking, dimmed = false): L.DivIcon {
       iconAnchor: [20, 4],
       popupAnchor: [0, -2],
     });
+  } else {
+    icon = L.divIcon({
+      className: "parking-marker",
+      html: `
+        <div style="
+          background: ${color};
+          color: white;
+          border-radius: 50%;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+          border: 2px solid white;
+          box-shadow: 0 2px 6px rgba(0,0,0,${dimmed ? "0.1" : "0.35"});
+          opacity: ${dimmed ? 0.25 : 1};
+          transition: opacity 0.3s ease;
+        ">${spots}</div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -20],
+    });
   }
 
-  return L.divIcon({
-    className: "parking-marker",
-    html: `
-      <div style="
-        background: ${color};
-        color: white;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: 700;
-        border: 2px solid white;
-        box-shadow: 0 2px 6px rgba(0,0,0,${dimmed ? "0.1" : "0.35"});
-        opacity: ${dimmed ? 0.25 : 1};
-        transition: opacity 0.3s ease;
-      ">${spots}</div>
-    `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -20],
-  });
+  iconCache.set(cacheKey, icon);
+  return icon;
 }
 
 function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {

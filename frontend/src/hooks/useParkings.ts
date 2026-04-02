@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Parking, ParkingListResponse } from "../types/parking";
 import { getNearbyParkings, getParkings } from "../services/api";
 
@@ -157,7 +157,10 @@ export function useParkings() {
     };
   }, [fetchData, getRefreshInterval]);
 
-  const parkings = allParkings.filter((p) => matchesClientFilters(p, filters));
+  const parkings = useMemo(
+    () => allParkings.filter((p) => matchesClientFilters(p, filters)),
+    [allParkings, filters],
+  );
 
   return {
     parkings,
