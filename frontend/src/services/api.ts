@@ -2,8 +2,8 @@ import type { ParkingListResponse, ParkingHistoryResponse } from "../types/parki
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
-async function fetchJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+async function fetchJSON<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
@@ -32,9 +32,11 @@ export async function getNearbyParkings(
 
 export async function getParkingHistory(
   parkingId: number,
-  hours = 24
+  hours = 24,
+  signal?: AbortSignal,
 ): Promise<ParkingHistoryResponse> {
   return fetchJSON(
-    `${API_BASE}/api/v1/parkings/${parkingId}/history?hours=${hours}`
+    `${API_BASE}/api/v1/parkings/${parkingId}/history?hours=${hours}`,
+    signal,
   );
 }

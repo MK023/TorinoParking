@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Parking, Snapshot } from "../types/parking";
 import { getParkingHistory } from "../services/api";
 import { getStatusColor, getNavigationUrl } from "../utils/parking";
@@ -76,14 +76,20 @@ export default function ParkingDetail({ parking, onBack }: Props) {
   const d = parking.detail;
 
   useEffect(() => {
+    const controller = new AbortController();
     setLoadingHistory(true);
-    getParkingHistory(parking.id, 6)
+    getParkingHistory(parking.id, 6, controller.signal)
       .then((res) => setSnapshots(res.snapshots))
-      .catch(() => setSnapshots([]))
-      .finally(() => setLoadingHistory(false));
+      .catch(() => {
+        if (!controller.signal.aborted) setSnapshots([]);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingHistory(false);
+      });
+    return () => controller.abort();
   }, [parking.id]);
 
-  const hourBuckets = aggregateByHour(snapshots);
+  const hourBuckets = useMemo(() => aggregateByHour(snapshots), [snapshots]);
 
   const hasRates =
     d &&

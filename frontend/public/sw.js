@@ -1,6 +1,6 @@
 // Service Worker for caching map tiles
-const TILE_CACHE = "map-tiles-v1";
-const TILE_PATTERN = /basemaps\.cartocdn\.com/;
+const TILE_CACHE = "map-tiles-v2";
+const TILE_PATTERN = /api\.mapbox\.com\/styles\/v1\/mapbox\/.+\/tiles\//;
 
 self.addEventListener("install", () => {
   self.skipWaiting();

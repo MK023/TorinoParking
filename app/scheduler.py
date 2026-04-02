@@ -12,7 +12,7 @@ import redis.asyncio as aioredis
 import structlog
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED, JobExecutionEvent
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlalchemy import func, insert, select, text
+from sqlalchemy import insert, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.api.schemas import ParkingDetailSchema, ParkingSchema
@@ -78,36 +78,43 @@ async def fetch_parking_data(
         )
         await redis_pool.set(PARKINGS_CACHE_KEY, serialized, ex=settings.cache_ttl)
 
-        # Upsert parking master data + store snapshots
+        # Batch upsert parking master data + store snapshots
         now = datetime.now(timezone.utc)
         async with async_session_factory() as session:
-            for p in parkings:
-                geo = func.ST_SetSRID(func.ST_MakePoint(p.lng, p.lat), 4326)
-                stmt = (
-                    pg_insert(ParkingEntity)
-                    .values(
-                        id=p.id,
-                        name=p.name,
-                        total_spots=p.total_spots,
-                        lat=p.lat,
-                        lng=p.lng,
-                        location=geo,
-                    )
-                    .on_conflict_do_update(
-                        index_elements=["id"],
-                        set_={
-                            "name": p.name,
-                            "total_spots": p.total_spots,
-                            "lat": p.lat,
-                            "lng": p.lng,
-                            "location": geo,
-                        },
-                    )
+            upsert_rows = [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "total_spots": p.total_spots,
+                    "lat": p.lat,
+                    "lng": p.lng,
+                }
+                for p in parkings
+            ]
+            stmt = (
+                pg_insert(ParkingEntity)
+                .values(upsert_rows)
+                .on_conflict_do_update(
+                    index_elements=["id"],
+                    set_={
+                        "name": pg_insert(ParkingEntity).excluded.name,
+                        "total_spots": pg_insert(ParkingEntity).excluded.total_spots,
+                        "lat": pg_insert(ParkingEntity).excluded.lat,
+                        "lng": pg_insert(ParkingEntity).excluded.lng,
+                    },
                 )
-                await session.execute(stmt)
-            await session.flush()
+            )
+            await session.execute(stmt)
 
-            rows = [
+            # Update PostGIS geometry from lat/lng in a single statement
+            await session.execute(
+                text(
+                    "UPDATE parkings SET location = ST_SetSRID(ST_MakePoint(lng, lat), 4326) "
+                    "WHERE location IS DISTINCT FROM ST_SetSRID(ST_MakePoint(lng, lat), 4326)"
+                )
+            )
+
+            snapshot_rows = [
                 {
                     "parking_id": p.id,
                     "free_spots": p.free_spots,
@@ -118,7 +125,7 @@ async def fetch_parking_data(
                 }
                 for p in parkings
             ]
-            await session.execute(insert(ParkingSnapshot), rows)
+            await session.execute(insert(ParkingSnapshot), snapshot_rows)
             await session.commit()
 
         logger.info("fetch_parking_data_done", count=len(parkings))
