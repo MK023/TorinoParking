@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://parking:parking@postgres:5432/parking"
 
-    redis_url: str = "redis://redis:6379/0"
+    redis_url: str = "redis://:changeme@redis:6379/0"
     redis_max_connections: int = 20
     redis_socket_timeout: float = 5.0
     redis_socket_connect_timeout: float = 2.0

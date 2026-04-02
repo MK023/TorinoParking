@@ -35,7 +35,12 @@ class ParkingXMLParser:
     @classmethod
     def parse_response(cls, xml_text: str) -> list[Parking]:
         try:
-            data = xmltodict.parse(xml_text)
+            data = xmltodict.parse(
+                xml_text,
+                forbid_dtd=True,
+                forbid_entities=True,
+                forbid_external=True,
+            )
             pk_list = data["traffic_data"]["PK_data"]
         except Exception as e:
             raise FiveTApiError(f"Unexpected 5T XML format: {e}") from e

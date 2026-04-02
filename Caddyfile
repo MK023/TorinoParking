@@ -1,0 +1,29 @@
+# Development: self-signed TLS on localhost
+# Production: replace "localhost" with your domain for automatic Let's Encrypt
+{
+	admin off
+}
+
+localhost {
+	# Backend API + docs
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+	handle /health {
+		reverse_proxy backend:8000
+	}
+	handle /docs {
+		reverse_proxy backend:8000
+	}
+	handle /redoc {
+		reverse_proxy backend:8000
+	}
+	handle /openapi.json {
+		reverse_proxy backend:8000
+	}
+
+	# Frontend (catch-all)
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

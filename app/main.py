@@ -13,6 +13,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from app.api.exception_handlers import register_exception_handlers
 from app.api.middleware import (
@@ -85,6 +86,10 @@ def create_app() -> FastAPI:
         allow_methods=["GET"],
         allow_headers=["X-API-Key", "Content-Type", "Accept", "If-None-Match"],
     )
+    # Must be outermost: rewrites request.client from X-Forwarded-For
+    # before any other middleware reads the client IP.
+    # trusted_hosts limits which proxies are accepted (Caddy on Docker network).
+    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
     app.include_router(health.router)
     app.include_router(parkings.router)
