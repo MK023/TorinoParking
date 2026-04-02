@@ -113,17 +113,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    _CSP = "; ".join(
-        [
-            "default-src 'self'",
-            "script-src 'self'",
-            "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: blob: https://api.mapbox.com",
-            "connect-src 'self' https://api.mapbox.com https://api.open-meteo.com",
-            "font-src 'self'",
-            "frame-ancestors 'none'",
-        ]
-    )
+    _CSP = "; ".join([
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob: https://api.mapbox.com",
+        "connect-src 'self' https://api.mapbox.com https://api.open-meteo.com",
+        "font-src 'self'",
+        "frame-ancestors 'none'",
+    ])
 
     async def dispatch(self, request: Request, call_next) -> Response:
         response = await call_next(request)
