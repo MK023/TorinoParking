@@ -11,6 +11,7 @@ hiredis==3.3.0
 APScheduler==3.11.2
 httpx==0.28.1
 xmltodict==1.0.4
+defusedxml==0.7.1
 orjson==3.11.7
 sentry-sdk[fastapi]==2.53.0
 structlog==25.5.0

@@ -5,6 +5,7 @@ Malformed entries are logged and silently skipped to ensure partial data
 availability even when individual records are corrupt.
 """
 
+import defusedxml.minidom
 import structlog
 import xmltodict
 
@@ -35,12 +36,8 @@ class ParkingXMLParser:
     @classmethod
     def parse_response(cls, xml_text: str) -> list[Parking]:
         try:
-            data = xmltodict.parse(
-                xml_text,
-                forbid_dtd=True,
-                forbid_entities=True,
-                forbid_external=True,
-            )
+            defusedxml.minidom.parseString(xml_text)  # XXE/DTD/bomb validation
+            data = xmltodict.parse(xml_text)
             pk_list = data["traffic_data"]["PK_data"]
         except Exception as e:
             raise FiveTApiError(f"Unexpected 5T XML format: {e}") from e
