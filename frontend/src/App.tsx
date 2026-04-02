@@ -7,6 +7,8 @@ import { useTheme } from "./hooks/useTheme";
 import { useWeather } from "./hooks/useWeather";
 import ParkingMap from "./components/ParkingMap";
 import Sidebar from "./components/Sidebar";
+import OfflineBanner from "./components/OfflineBanner";
+import { hapticMedium, hapticSelection, hapticNotification, setStatusBarStyle } from "./utils/native";
 import "./styles/app.css";
 
 function useIsMobile() {
@@ -36,6 +38,11 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
   const weather = useWeather();
 
+  // Sync status bar style with theme
+  useEffect(() => {
+    setStatusBarStyle(theme === "dark");
+  }, [theme]);
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar-collapsed") === "true";
   });
@@ -56,7 +63,9 @@ export default function App() {
   }, [selectedParking, selectedPOI, isMobile]);
 
   const handleLocateMe = useCallback(() => {
+    hapticMedium();
     if (!navigator.geolocation) {
+      hapticNotification("error");
       alert("Geolocalizzazione non supportata dal browser");
       return;
     }
@@ -72,8 +81,10 @@ export default function App() {
           userLng: lng,
         }));
         boostRefresh();
+        hapticNotification("success");
       },
       () => {
+        hapticNotification("error");
         alert("Impossibile ottenere la posizione. Controlla i permessi.");
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -81,6 +92,7 @@ export default function App() {
   }, [setFilters, boostRefresh]);
 
   const handleSelect = useCallback((parking: Parking | null) => {
+    if (parking) hapticSelection();
     setSelectedParking(parking);
   }, []);
 
@@ -112,6 +124,7 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      <OfflineBanner />
       <Sidebar
         parkings={parkings}
         allParkings={allParkings}

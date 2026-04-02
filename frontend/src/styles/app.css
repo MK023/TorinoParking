@@ -10,6 +10,13 @@
 :root {
   --radius: 10px;
   --sidebar-width: 380px;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  /* Dynamic Type: use rem so iOS text size preference scales everything */
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 [data-theme="dark"] {

@@ -157,6 +157,7 @@ export default function ParkingDetail({ parking, onBack }: Props) {
           href={getNavigationUrl(parking.lat, parking.lng)}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`Apri navigazione verso ${parking.name}`}
         >
           <Navigation size={18} />
           Naviga verso questo parcheggio
@@ -313,6 +314,10 @@ export default function ParkingDetail({ parking, onBack }: Props) {
                 key={b.timestamp}
                 className="history-bar-wrapper"
                 onClick={() => setTooltipIdx(tooltipIdx === i ? null : i)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setTooltipIdx(tooltipIdx === i ? null : i); } }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${b.label}: ${b.avgFree} posti liberi su ${b.totalSpots}`}
               >
                 {tooltipIdx === i && (
                   <div className="history-tooltip">

@@ -14,7 +14,14 @@ export default function ParkingCard({ parking, onClick }: Props) {
   const nearlyFull = parking.is_available && parking.occupancy_percentage !== null && parking.occupancy_percentage >= 90;
 
   return (
-    <div className="parking-card" onClick={onClick}>
+    <div
+      className="parking-card"
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      role="button"
+      tabIndex={0}
+      aria-label={`${parking.name}, ${parking.free_spots !== null ? `${parking.free_spots} posti liberi` : parking.status_label}`}
+    >
       <div className="parking-card-header">
         {nearlyFull ? (
           <div className="parking-card-indicator-triangle" style={{ borderTopColor: color }} />

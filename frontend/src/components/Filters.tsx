@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Filters as FilterState, StatusFilter } from "../hooks/useParkings";
 import type { POICategory } from "../types/poi";
+import { hapticLight } from "../utils/native";
 import { Accessibility, CreditCard, Roof, Train, Hospital, GraduationCap, ChevronDown } from "./Icons";
 
 interface Props {
@@ -45,6 +46,7 @@ export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer
     + (poiLayers?.size ?? 0);
 
   const toggleStatus = (key: StatusFilter) => {
+    hapticLight();
     const current = filters.statusFilters;
     const next = current.includes(key)
       ? current.filter((k) => k !== key)
@@ -88,9 +90,10 @@ export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer
                 <button
                   key={pill.key}
                   className={`filter-pill${filters[pill.key] ? " active" : ""}`}
-                  onClick={() =>
-                    onChange({ ...filters, [pill.key]: !filters[pill.key] })
-                  }
+                  onClick={() => {
+                    hapticLight();
+                    onChange({ ...filters, [pill.key]: !filters[pill.key] });
+                  }}
                 >
                   {pill.icon}
                   {pill.label}

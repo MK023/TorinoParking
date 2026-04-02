@@ -21,6 +21,7 @@ function Svg({
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      aria-hidden="true"
     >
       {children}
     </svg>
