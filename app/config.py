@@ -48,11 +48,25 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
-    @field_validator("cors_origins", mode="before")
+    # Trusted proxy IPs allowed to set X-Forwarded-For (prevents IP spoofing).
+    # Default covers loopback + Docker private network ranges.
+    # Override via PROXY_TRUSTED_HOSTS env var as JSON list or comma-separated.
+    proxy_trusted_hosts: list[str] = [
+        "127.0.0.1",
+        "::1",
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+    ]
+
+    @field_validator("cors_origins", "proxy_trusted_hosts", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+    def parse_list_setting(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, str):
-            return json.loads(v)
+            v = v.strip()
+            if v.startswith("["):
+                return json.loads(v)
+            return [item.strip() for item in v.split(",") if item.strip()]
         return v
 
     @model_validator(mode="after")

@@ -72,16 +72,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             api_key = request.headers.get("X-API-Key")
 
             tier: str | None = None
+            key_hash: str | None = None
             if api_key:
                 from app.infrastructure.api_key_cache import lookup
+                from app.infrastructure.api_key_service import hash_api_key
 
                 tier = await lookup(api_key)
+                # Bucket by full SHA-256 HMAC hash to avoid prefix collisions
+                # between keys sharing the same first chars (noisy-neighbor DoS).
+                key_hash = hash_api_key(api_key)[:16] if tier else None
 
             if tier == "premium":
-                identifier = f"premium:{api_key[:8]}"
+                identifier = f"premium:{key_hash}"
                 max_requests = settings.rate_limit_premium
             elif tier is not None:
-                identifier = f"auth:{api_key[:8]}"
+                identifier = f"auth:{key_hash}"
                 max_requests = settings.rate_limit_authenticated
             else:
                 identifier = f"ip:{client_ip}"
@@ -129,7 +134,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Cache-Control"] = "no-store"
+        # `no-cache` (not `no-store`) lets the ETag conditional-request flow
+        # in /api/v1/parkings work: clients still revalidate with the server,
+        # but the 304 short-circuit is reachable.
+        response.headers["Cache-Control"] = "no-cache"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)"
         response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"

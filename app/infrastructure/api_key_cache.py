@@ -4,6 +4,7 @@ The cache is refreshed from PostgreSQL every ``TTL_SECONDS`` seconds,
 keeping the hot path (middleware + dependency) free from DB round-trips.
 """
 
+import asyncio
 import time
 
 from sqlalchemy import select
@@ -16,6 +17,7 @@ TTL_SECONDS = 60
 
 _cache: dict[str, str] = {}  # key_hash -> tier
 _last_refresh: float = 0.0
+_refresh_lock = asyncio.Lock()
 
 
 async def refresh() -> None:
@@ -30,9 +32,18 @@ async def refresh() -> None:
 
 
 async def ensure_fresh() -> None:
-    """Refresh the cache if it has gone stale."""
+    """Refresh the cache if it has gone stale.
+
+    Uses a lock with double-check to prevent concurrent refreshes:
+    under load, multiple coroutines could pass the staleness check
+    simultaneously and fire parallel DB queries, causing torn writes
+    to ``_cache``. The lock + double-check ensures exactly one refresh
+    per TTL window.
+    """
     if time.monotonic() - _last_refresh > TTL_SECONDS:
-        await refresh()
+        async with _refresh_lock:
+            if time.monotonic() - _last_refresh > TTL_SECONDS:
+                await refresh()
 
 
 async def lookup(raw_key: str) -> str | None:

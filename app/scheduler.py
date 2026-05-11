@@ -76,9 +76,11 @@ async def fetch_parking_data(
             compress=settings.cache_compression,
             threshold=settings.cache_compression_threshold,
         )
-        await redis_pool.set(PARKINGS_CACHE_KEY, serialized, ex=settings.cache_ttl)
 
-        # Batch upsert parking master data + store snapshots
+        # Persist to DB FIRST, then write cache. Writing cache before commit
+        # would leave Redis serving data that was never persisted in case of
+        # a DB rollback (constraint violation, network failure, etc.) — and
+        # the discrepancy would live for `cache_ttl` seconds.
         now = datetime.now(timezone.utc)
         async with async_session_factory() as session:
             upsert_rows = [
@@ -127,6 +129,9 @@ async def fetch_parking_data(
             ]
             await session.execute(insert(ParkingSnapshot), snapshot_rows)
             await session.commit()
+
+        # DB transaction succeeded — safe to populate cache now.
+        await redis_pool.set(PARKINGS_CACHE_KEY, serialized, ex=settings.cache_ttl)
 
         logger.info("fetch_parking_data_done", count=len(parkings))
     except Exception:

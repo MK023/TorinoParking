@@ -88,8 +88,14 @@ def create_app() -> FastAPI:
     )
     # Must be outermost: rewrites request.client from X-Forwarded-For
     # before any other middleware reads the client IP.
-    # trusted_hosts limits which proxies are accepted (Caddy on Docker network).
-    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
+    # trusted_hosts limits which proxies are accepted to prevent IP spoofing
+    # via crafted X-Forwarded-For headers. Default covers loopback + Docker
+    # private network ranges where Caddy reverse proxy typically runs.
+    # Override via PROXY_TRUSTED_HOSTS env var (comma-separated) if needed.
+    app.add_middleware(
+        ProxyHeadersMiddleware,
+        trusted_hosts=settings.proxy_trusted_hosts,
+    )
 
     app.include_router(health.router)
     app.include_router(parkings.router)
