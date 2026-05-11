@@ -19,6 +19,27 @@
 
 Full-stack application that aggregates real-time parking data from Turin's open data platform (5T) and enriches it with static details from GTT (address, rates, payment methods, transit connections). Designed mobile-first with an Apple-inspired UI.
 
+## Why
+
+Built as a full-stack data engineering portfolio piece around a real problem I actually wanted solved: parking availability in Turin, surfaced on a map with the same UX standard as commercial apps but without proprietary lock-in.
+
+The technical playground that matters more than the app itself: high-frequency external ingestion (XML feed every 2 minutes) with deduplication and snapshotting, PostGIS spatial queries for "near me" geolocation, transparent caching with ETags + compression, multi-tier sliding-window rate limiting, and clean API/frontend separation. Open data is the perfect substrate — it removes API-cost concerns and lets focus stay on the architecture.
+
+## Operating cost
+
+Designed to run **self-hosted on commodity infrastructure**:
+
+| Component | Cost | Notes |
+|---|---|---|
+| Linux host (1 vCPU / 1 GB RAM) | ~$4-6/month | Hetzner CX11, Vultr, or any equivalent VPS |
+| PostgreSQL 16 + PostGIS 3.4 | $0 | Containerized, part of the Docker Compose stack |
+| Redis 7 | $0 | Containerized (optional, graceful degradation if absent) |
+| Mapbox tiles | Free | Up to 50,000 map loads/month on free tier |
+| 5T Open Data API | $0 | Public open data, no rate limit |
+| Open-Meteo (weather) | $0 | No API key required for non-commercial use |
+
+Whole stack fits in ~600 MB RAM. The architecture is designed so a developer can self-host a city of <100 parking lots for under $10/month total — yet scales horizontally (Redis cache, async APScheduler, stateless API) the moment traffic justifies it.
+
 ## Features
 
 ### Frontend
