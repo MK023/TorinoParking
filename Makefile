@@ -9,6 +9,9 @@ down:                ## Ferma tutti i servizi (preserva volumi)
 
 restart: down up     ## Restart completo
 
+tunnel:              ## Espone l'app via ngrok per test su iPhone
+	@./scripts/tunnel.sh
+
 logs:                ## Log live di tutti i servizi
 	docker compose logs -f
 

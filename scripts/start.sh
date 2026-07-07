@@ -68,7 +68,8 @@ wait_for_http() {
   local name=$1 url=$2 retries=$3
   printf "    %-20s " "$name"
   for i in $(seq 1 "$retries"); do
-    if curl -sf "$url" > /dev/null 2>&1; then ok; return 0; fi
+    # -k: Caddy usa TLS self-signed su localhost in dev
+    if curl -skf "$url" > /dev/null 2>&1; then ok; return 0; fi
     sleep 3
   done
   warn "TIMEOUT (potrebbe essere ancora in avvio)"
@@ -78,13 +79,13 @@ wait_for_http() {
 
 wait_for_container parking_postgres 30 || exit 1
 wait_for_container parking_redis 15 || exit 1
-wait_for_http parking_backend http://localhost:8000/health 40
-wait_for_http parking_frontend http://localhost:3000 20
+# Backend e frontend non pubblicano porte sull'host: si passa da Caddy
+wait_for_http parking_backend https://localhost/health 40
+wait_for_http parking_frontend https://localhost/ 20
 
 # --- Summary ---
 echo ""
 echo "==> TorinoParking avviato!"
-echo "    Frontend:  http://localhost:3000"
-echo "    Backend:   http://localhost:8000"
-echo "    API docs:  http://localhost:8000/docs"
-[ "$USE_DOPPLER" = true ] && echo "    Secrets:   Doppler"
+echo "    App:       https://localhost"
+echo "    API docs:  https://localhost/docs"
+if [ "$USE_DOPPLER" = true ]; then echo "    Secrets:   Doppler"; fi
