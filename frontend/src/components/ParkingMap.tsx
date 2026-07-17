@@ -35,6 +35,9 @@ function createIcon(parking: Parking, dimmed = false): L.DivIcon {
   const cacheKey = `${parking.id}:${parking.free_spots}:${parking.status}:${parking.occupancy_percentage}:${dimmed}`;
   const cached = iconCache.get(cacheKey);
   if (cached) return cached;
+  // La chiave include valori che cambiano a ogni polling: senza un tetto la
+  // cache cresce per sempre nelle sessioni lunghe (app lasciata aperta in auto)
+  if (iconCache.size > 500) iconCache.clear();
   const color = getStatusColor(parking);
   const spots = parking.free_spots !== null ? parking.free_spots : "\u2014";
   const nearlyFull = parking.is_available && parking.occupancy_percentage !== null && parking.occupancy_percentage >= 90;
@@ -248,7 +251,7 @@ export default function ParkingMap({ parkings, onSelect, userPosition, onMapClic
                   <div style={{ margin: "6px 0", fontSize: 12 }}>
                     {p.is_available ? (
                       <span style={{ color: "var(--text-secondary)" }}>
-                        {p.free_spots} / {p.total_spots} posti liberi
+                        {p.free_spots ?? "—"} / {p.total_spots} posti liberi
                       </span>
                     ) : (
                       <span style={{ color: "#ef4444", fontWeight: 600 }}>{p.status_label}</span>

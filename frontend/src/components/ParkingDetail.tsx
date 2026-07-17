@@ -71,6 +71,7 @@ interface Props {
 export default function ParkingDetail({ parking, onBack }: Props) {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [historyError, setHistoryError] = useState(false);
   const [tooltipIdx, setTooltipIdx] = useState<number | null>(null);
   const color = getStatusColor(parking);
   const d = parking.detail;
@@ -81,7 +82,8 @@ export default function ParkingDetail({ parking, onBack }: Props) {
     getParkingHistory(parking.id, 6, controller.signal)
       .then((res) => setSnapshots(res.snapshots))
       .catch(() => {
-        if (!controller.signal.aborted) setSnapshots([]);
+        // Errore di rete ≠ parcheggio senza storico: la UI li distingue
+        if (!controller.signal.aborted) setHistoryError(true);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoadingHistory(false);
@@ -311,6 +313,8 @@ export default function ParkingDetail({ parking, onBack }: Props) {
         <h3>Storico (6h)</h3>
         {loadingHistory ? (
           <p className="loading-text">Caricamento storico...</p>
+        ) : historyError ? (
+          <p className="empty-text">Storico non disponibile al momento, riprova più tardi</p>
         ) : hourBuckets.length === 0 ? (
           <p className="empty-text">Nessun dato storico disponibile</p>
         ) : (

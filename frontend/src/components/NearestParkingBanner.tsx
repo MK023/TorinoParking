@@ -34,7 +34,14 @@ export default function NearestParkingBanner({ parkings, userLat, userLng, onSel
   }
 
   return (
-    <div className="nearest-banner" onClick={() => onSelect(nearest)}>
+    <div
+      className="nearest-banner"
+      onClick={() => onSelect(nearest)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(nearest); } }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Parcheggio libero più vicino: ${nearest.name}, ${formatDistance(minDist)}`}
+    >
       <div className="nearest-banner-header">Parcheggio libero più vicino</div>
       <div className="nearest-banner-body">
         <div className="nearest-banner-info">
