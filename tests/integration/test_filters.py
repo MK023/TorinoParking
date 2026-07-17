@@ -70,6 +70,22 @@ async def test_filter_min_spots(client, _populate_cache):
 
 
 @pytest.mark.asyncio
+async def test_scheduler_populates_etag(client, _populate_cache):
+    """Regression: lo scheduler deve scrivere la chiave ETag insieme ai dati.
+
+    Prima del fix scriveva solo la chiave dati: in steady state (cache sempre
+    calda) l'header ETag non veniva mai emesso e i conditional request erano
+    di fatto morti."""
+    resp = await client.get("/api/v1/parkings")
+    assert resp.status_code == 200
+    etag = resp.headers.get("etag")
+    assert etag
+
+    resp_cached = await client.get("/api/v1/parkings", headers={"If-None-Match": etag})
+    assert resp_cached.status_code == 304
+
+
+@pytest.mark.asyncio
 async def test_no_filter_returns_all(client, _populate_cache):
     resp = await client.get("/api/v1/parkings")
     assert resp.status_code == 200
