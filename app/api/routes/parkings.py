@@ -102,25 +102,25 @@ async def get_nearby_parkings(
     api_key: str | None = Security(verify_api_key),
     db: AsyncSession = Depends(get_db_session),
     cache: CacheService = Depends(get_cache_service),
+    repository: ParkingRepository = Depends(get_parking_repository),
 ) -> ParkingListResponse:
     """Find parkings within radius (meters) of a point.
 
     Uses PostGIS for spatial filtering, then merges real-time availability
     data from the 5T cache so results include live free_spots and status.
     """
-    # Single repository instance for both the spatial query and the cache merge.
-    # Previously the route also injected `repository: ParkingRepository` and
-    # ignored it for find_nearby, creating two parallel repositories per request.
     repo = ParkingDBRepository(db)
     entities = await repo.find_nearby(lat, lng, radius, limit)
 
-    # Build a lookup of real-time data from cache
+    # Build a lookup of real-time data from cache; on cache miss
+    # _get_parkings_data falls back to a live 5T fetch via `repository`.
     live_data: dict[int, ParkingSchema] = {}
     try:
-        data, _ = await _get_parkings_data(cache, repo)
+        data, _ = await _get_parkings_data(cache, repository)
         live_data = {p.id: p for p in data.parkings}
-    except Exception:
-        logger.warning("nearby_cache_miss", msg="Could not load live data for merge")
+    except Exception as exc:
+        # Degrade gracefully: still return spatial results, but say why.
+        logger.warning("nearby_live_data_unavailable", error=str(exc), exc_info=True)
 
     parkings = []
     for e in entities:
