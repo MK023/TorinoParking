@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Parking } from "./types/parking";
 import type { POI, POICategory } from "./types/poi";
 import { poiData } from "./data/poi";
@@ -27,7 +27,15 @@ function useIsMobile() {
 export default function App() {
   const { parkings, allParkings, lastUpdate, loading, error, filters, setFilters, refresh, boostRefresh } =
     useParkings();
-  const [selectedParking, setSelectedParking] = useState<Parking | null>(null);
+  const [selected, setSelected] = useState<Parking | null>(null);
+  // Riaggancia la selezione ai dati freschi del polling: senza il lookup il
+  // pannello dettaglio resterebbe congelato allo snapshot del click mentre
+  // mappa e lista si aggiornano. Fallback allo snapshot se il parcheggio
+  // esce dal set corrente (es. cambio raggio in nearby mode).
+  const selectedParking = useMemo(
+    () => (selected ? (allParkings.find((p) => p.id === selected.id) ?? selected) : null),
+    [selected, allParkings]
+  );
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [poiLayers, setPoiLayers] = useState<Set<POICategory>>(new Set());
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
@@ -86,7 +94,7 @@ export default function App() {
 
   const handleSelect = useCallback((parking: Parking | null) => {
     if (parking) hapticSelection();
-    setSelectedParking(parking);
+    setSelected(parking);
     if (parking && isMobile) setMobileOverlayOpen(true);
   }, [isMobile]);
 
@@ -106,7 +114,7 @@ export default function App() {
   const handleSelectPOI = useCallback((poi: POI | null) => {
     setSelectedPOI(poi);
     if (poi) {
-      setSelectedParking(null);
+      setSelected(null);
       if (isMobile) setMobileOverlayOpen(true);
     }
   }, [isMobile]);
@@ -115,7 +123,7 @@ export default function App() {
     setSelectedPOI(null);
     if (isMobile) {
       setMobileOverlayOpen(false);
-      setSelectedParking(null);
+      setSelected(null);
     }
   }, [isMobile]);
 

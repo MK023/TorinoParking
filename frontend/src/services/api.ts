@@ -8,25 +8,30 @@ async function fetchJSON<T>(url: string, signal?: AbortSignal): Promise<T> {
   return res.json();
 }
 
-export async function getParkings(params?: {
-  available?: boolean;
-  min_spots?: number;
-}): Promise<ParkingListResponse> {
+export async function getParkings(
+  params?: {
+    available?: boolean;
+    min_spots?: number;
+  },
+  signal?: AbortSignal,
+): Promise<ParkingListResponse> {
   const query = new URLSearchParams();
   if (params?.available !== undefined) query.set("available", String(params.available));
   if (params?.min_spots !== undefined) query.set("min_spots", String(params.min_spots));
   const qs = query.toString();
-  return fetchJSON(`${API_BASE}/api/v1/parkings${qs ? `?${qs}` : ""}`);
+  return fetchJSON(`${API_BASE}/api/v1/parkings${qs ? `?${qs}` : ""}`, signal);
 }
 
 export async function getNearbyParkings(
   lat: number,
   lng: number,
   radius = 1500,
-  limit = 20
+  limit = 20,
+  signal?: AbortSignal,
 ): Promise<ParkingListResponse> {
   return fetchJSON(
-    `${API_BASE}/api/v1/parkings/nearby?lat=${lat}&lng=${lng}&radius=${radius}&limit=${limit}`
+    `${API_BASE}/api/v1/parkings/nearby?lat=${lat}&lng=${lng}&radius=${radius}&limit=${limit}`,
+    signal,
   );
 }
 

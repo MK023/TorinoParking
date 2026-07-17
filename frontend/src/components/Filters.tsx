@@ -40,6 +40,14 @@ const statusPills: StatusPillDef[] = [
 
 export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer }: Props) {
   const [expanded, setExpanded] = useState(false);
+  // Valore mostrato durante il drag dello slider; il filtro vero (che costa
+  // una fetch /nearby) si aggiorna solo al rilascio. Lo slider è l'unico
+  // writer di filters.radius, quindi il draft non può andare fuori sync.
+  const [radiusDraft, setRadiusDraft] = useState(filters.radius);
+
+  const commitRadius = () => {
+    if (radiusDraft !== filters.radius) onChange({ ...filters, radius: radiusDraft });
+  };
 
   const activeCount = pills.filter((p) => filters[p.key]).length
     + filters.statusFilters.length
@@ -128,16 +136,19 @@ export default function Filters({ filters, onChange, poiLayers, onTogglePOILayer
 
       {filters.nearbyMode && (
         <label className="filter-range">
-          <span>Raggio: {filters.radius}m</span>
+          <span>Raggio: {radiusDraft}m</span>
           <input
             type="range"
             min={200}
             max={5000}
             step={100}
-            value={filters.radius}
-            onChange={(e) =>
-              onChange({ ...filters, radius: Number(e.target.value) })
-            }
+            value={radiusDraft}
+            // Il commit avviene al rilascio: onChange spara per ogni step del
+            // drag e ogni commit costa una fetch /nearby con spinner
+            onChange={(e) => setRadiusDraft(Number(e.target.value))}
+            onPointerUp={commitRadius}
+            onKeyUp={commitRadius}
+            onBlur={commitRadius}
           />
         </label>
       )}
