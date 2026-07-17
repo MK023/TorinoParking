@@ -4,8 +4,8 @@
 	admin off
 }
 
-localhost {
-	# Backend API + docs
+# Routing condiviso: API/docs -> backend, resto -> frontend
+(app) {
 	handle /api/* {
 		reverse_proxy backend:8000
 	}
@@ -21,9 +21,18 @@ localhost {
 	handle /openapi.json {
 		reverse_proxy backend:8000
 	}
-
 	# Frontend (catch-all)
 	handle {
 		reverse_proxy frontend:3000
 	}
+}
+
+localhost {
+	import app
+}
+
+# Tunnel ngrok per test su iPhone: HTTP puro (ngrok termina lui l'HTTPS pubblico).
+# NGROK_DOMAIN arriva dal .env via docker-compose; default innocuo se assente.
+http://{$NGROK_DOMAIN:tunnel.disabled} {
+	import app
 }
