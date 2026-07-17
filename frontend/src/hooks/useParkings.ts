@@ -92,14 +92,23 @@ export function useParkings() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const boostTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const nearbyBoostUntil = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  // Deadline del boost come stato: al cambio l'effetto sotto ricrea
+  // l'interval col ritmo giusto (il vecchio schema a ref+timeout veniva
+  // cancellato dal cleanup e il polling restava a 30s per sempre)
+  const [boostUntil, setBoostUntil] = useState(0);
 
   const getRefreshInterval = useCallback(() => {
-    if (Date.now() < nearbyBoostUntil.current) return REFRESH_NEARBY;
+    if (Date.now() < boostUntil) return REFRESH_NEARBY;
     return REFRESH_NORMAL;
-  }, []);
+  }, [boostUntil]);
 
   const fetchData = useCallback(async () => {
+    // Un solo fetch in volo: la risposta lenta di una chiamata precedente
+    // non deve sovrascrivere quella giusta (interval vs cambio filtri)
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       setError(null);
       let data: ParkingListResponse;
@@ -109,45 +118,53 @@ export function useParkings() {
           filters.userLat,
           filters.userLng,
           filters.radius,
-          50
+          50,
+          controller.signal
         );
       } else {
-        data = await getParkings();
+        data = await getParkings(undefined, controller.signal);
       }
 
+      if (controller.signal.aborted) return;
       setAllParkings(data.parkings);
       setLastUpdate(data.last_update);
     } catch (err) {
+      if (controller.signal.aborted) return;
       setError(err instanceof Error ? err.message : "Errore di connessione");
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [filters.nearbyMode, filters.userLat, filters.userLng, filters.radius]);
 
   const boostRefresh = useCallback(() => {
-    nearbyBoostUntil.current = Date.now() + NEARBY_BOOST_DURATION;
-    clearInterval(intervalRef.current);
-    clearTimeout(boostTimeoutRef.current);
-    intervalRef.current = setInterval(fetchData, REFRESH_NEARBY);
-    boostTimeoutRef.current = setTimeout(() => {
-      clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(fetchData, REFRESH_NORMAL);
-    }, NEARBY_BOOST_DURATION);
-  }, [fetchData]);
+    setBoostUntil(Date.now() + NEARBY_BOOST_DURATION);
+  }, []);
 
   useEffect(() => {
     // Spinner voluto sia al mount sia quando i filtri nearby rifanno la chiamata (fetchData cambia identità)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetchData();
-    intervalRef.current = setInterval(fetchData, getRefreshInterval());
+
+    const startInterval = () => {
+      clearInterval(intervalRef.current);
+      if (document.hidden) return;
+      intervalRef.current = setInterval(fetchData, getRefreshInterval());
+    };
+    startInterval();
+
+    // Allo scadere del boost si torna al ritmo normale
+    const boostLeft = boostUntil - Date.now();
+    if (boostLeft > 0) {
+      boostTimeoutRef.current = setTimeout(startInterval, boostLeft);
+    }
 
     const onVisibility = () => {
       if (document.hidden) {
         clearInterval(intervalRef.current);
       } else {
         fetchData();
-        intervalRef.current = setInterval(fetchData, getRefreshInterval());
+        startInterval();
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
@@ -155,9 +172,10 @@ export function useParkings() {
     return () => {
       clearInterval(intervalRef.current);
       clearTimeout(boostTimeoutRef.current);
+      abortRef.current?.abort();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [fetchData, getRefreshInterval]);
+  }, [fetchData, getRefreshInterval, boostUntil]);
 
   const parkings = useMemo(
     () => allParkings.filter((p) => matchesClientFilters(p, filters)),
