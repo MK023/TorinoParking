@@ -7,13 +7,17 @@ keeping the hot path (middleware + dependency) free from DB round-trips.
 import asyncio
 import time
 
+import structlog
 from sqlalchemy import select
 
 from app.infrastructure.api_key_service import hash_api_key
 from app.infrastructure.database import async_session_factory
 from app.infrastructure.db_models import ApiKeyEntity
 
+logger = structlog.get_logger()
+
 TTL_SECONDS = 60
+RETRY_BACKOFF_SECONDS = 5
 
 _cache: dict[str, str] = {}  # key_hash -> tier
 _last_refresh: float = 0.0
@@ -39,11 +43,22 @@ async def ensure_fresh() -> None:
     simultaneously and fire parallel DB queries, causing torn writes
     to ``_cache``. The lock + double-check ensures exactly one refresh
     per TTL window.
+
+    If the DB is transiently unreachable the stale cache keeps serving
+    (a key valid 60s ago is better than a 500 for every authenticated
+    client) and the next retry is pushed ``RETRY_BACKOFF_SECONDS`` ahead
+    so queued requests don't each pay the DB timeout in turn. On a cold
+    start with the DB down the cache is empty, so keys fail closed (403).
     """
+    global _last_refresh
     if time.monotonic() - _last_refresh > TTL_SECONDS:
         async with _refresh_lock:
             if time.monotonic() - _last_refresh > TTL_SECONDS:
-                await refresh()
+                try:
+                    await refresh()
+                except Exception:
+                    logger.warning("api_key_cache_refresh_failed", exc_info=True)
+                    _last_refresh = time.monotonic() - TTL_SECONDS + RETRY_BACKOFF_SECONDS
 
 
 async def lookup(raw_key: str) -> str | None:
