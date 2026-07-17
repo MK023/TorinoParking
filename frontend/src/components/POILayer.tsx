@@ -3,7 +3,7 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import type { POI, POICategory } from "../types/poi";
 import type { Parking } from "../types/parking";
-import { haversineMeters } from "../utils/parking";
+import { getNearestParkings } from "../utils/parking";
 
 function createPOIClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
   const count = cluster.getChildCount();
@@ -110,17 +110,6 @@ function createPOIIcon(
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -(size / 2 + 4)],
   });
-}
-
-export function getNearestParkings(poi: POI, parkings: Parking[], count: number = 3): (Parking & { distance: number })[] {
-  return parkings
-    .filter((p) => p.is_available && p.free_spots !== null && p.free_spots > 0)
-    .map((p) => ({
-      ...p,
-      distance: haversineMeters(poi.lat, poi.lng, p.lat, p.lng),
-    }))
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, count);
 }
 
 export default function POILayer({

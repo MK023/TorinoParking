@@ -75,9 +75,9 @@ export default function ParkingDetail({ parking, onBack }: Props) {
   const color = getStatusColor(parking);
   const d = parking.detail;
 
+  // Il componente è montato con key={parking.id}: lo stato riparte pulito a ogni parcheggio
   useEffect(() => {
     const controller = new AbortController();
-    setLoadingHistory(true);
     getParkingHistory(parking.id, 6, controller.signal)
       .then((res) => setSnapshots(res.snapshots))
       .catch(() => {

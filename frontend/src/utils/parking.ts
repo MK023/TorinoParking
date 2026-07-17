@@ -1,4 +1,5 @@
 import type { Parking } from "../types/parking";
+import type { POI } from "../types/poi";
 
 export function getStatusColor(parking: Parking): string {
   if (!parking.is_available) {
@@ -53,4 +54,15 @@ export function getNavigationUrl(lat: number, lng: number): string {
     return `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
   }
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+}
+
+export function getNearestParkings(poi: POI, parkings: Parking[], count: number = 3): (Parking & { distance: number })[] {
+  return parkings
+    .filter((p) => p.is_available && p.free_spots !== null && p.free_spots > 0)
+    .map((p) => ({
+      ...p,
+      distance: haversineMeters(poi.lat, poi.lng, p.lat, p.lng),
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, count);
 }

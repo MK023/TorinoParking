@@ -6,8 +6,7 @@ import ParkingCard from "./ParkingCard";
 import ParkingDetail from "./ParkingDetail";
 import Filters from "./Filters";
 import NearestParkingBanner from "./NearestParkingBanner";
-import { getNearestParkings } from "./POILayer";
-import { formatDistance } from "../utils/parking";
+import { formatDistance, getNearestParkings } from "../utils/parking";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import type { Theme } from "../hooks/useTheme";
 import type { Weather } from "../hooks/useWeather";
@@ -331,7 +330,7 @@ export default function Sidebar({
                 onTouchEnd={onDetailTouchEnd}
               >
                 <div className="mobile-detail-pill" />
-                <ParkingDetail parking={selectedParking} onBack={() => onSelect(null)} />
+                <ParkingDetail key={selectedParking.id} parking={selectedParking} onBack={() => onSelect(null)} />
               </div>
             ) : (
               listAndControls
@@ -414,7 +413,7 @@ export default function Sidebar({
           </header>
 
           {selectedParking ? (
-            <ParkingDetail parking={selectedParking} onBack={() => onSelect(null)} />
+            <ParkingDetail key={selectedParking.id} parking={selectedParking} onBack={() => onSelect(null)} />
           ) : (
             listAndControls
           )}

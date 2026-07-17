@@ -35,11 +35,11 @@ echo "ADMIN_API_KEY=$ADMIN_API_KEY" >> .env
 # 4. Start tutto con Docker Compose
 docker-compose up -d
 
-# 5. Verifica
-curl http://localhost:8000/health
+# 5. Verifica (tutto passa da Caddy, TLS self-signed in dev: serve -k)
+curl -k https://localhost/health
 
 # 6. Docs interattive
-open http://localhost:8000/docs
+open https://localhost/docs
 ```
 
 **Output atteso:**
@@ -326,10 +326,10 @@ KEYS *                # List all keys
 GET parkings:all      # Get value
 FLUSHALL              # Clear everything
 
-# === API Testing ===
-curl http://localhost:8000/health
-curl http://localhost:8000/api/v1/parkings
-http GET http://localhost:8000/api/v1/parkings  # httpie (better curl)
+# === API Testing (via Caddy, -k per il certificato self-signed) ===
+curl -k https://localhost/health
+curl -k https://localhost/api/v1/parkings
+http --verify=no GET https://localhost/api/v1/parkings  # httpie (better curl)
 
 # === Code Quality ===
 ruff check app/       # Linting

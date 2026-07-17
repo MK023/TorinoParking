@@ -136,6 +136,8 @@ export function useParkings() {
   }, [fetchData]);
 
   useEffect(() => {
+    // Spinner voluto sia al mount sia quando i filtri nearby rifanno la chiamata (fetchData cambia identità)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetchData();
     intervalRef.current = setInterval(fetchData, getRefreshInterval());
