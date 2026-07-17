@@ -104,11 +104,26 @@ docker compose up -d
 ./scripts/start.sh
 ```
 
-| Service   | URL                          |
-|-----------|------------------------------|
-| Frontend  | http://localhost:3000         |
-| Backend   | http://localhost:8000         |
-| API Docs  | http://localhost:8000/docs    |
+All traffic goes through Caddy (TLS with a self-signed certificate in development):
+
+| Service    | URL                              |
+|------------|----------------------------------|
+| Frontend   | https://localhost                 |
+| API        | https://localhost/api/v1/parkings |
+| API Docs   | https://localhost/docs            |
+| Health     | https://localhost/health          |
+
+> Your browser will warn about the self-signed certificate on first visit — expected in development. With `curl`, add `-k`.
+
+### Mobile testing (ngrok tunnel)
+
+With a free static ngrok domain set as `NGROK_DOMAIN` in `.env`:
+
+```bash
+make tunnel
+```
+
+The stack becomes reachable from your phone at `https://<NGROK_DOMAIN>`. The admin API (`/api/v1/admin/*`) is blocked on the tunnel host by Caddy.
 
 ### Secrets Management
 

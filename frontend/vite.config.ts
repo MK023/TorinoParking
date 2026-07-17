@@ -6,7 +6,8 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 3000,
-    allowedHosts: true,
+    // Caddy inoltra l'Host originale: consenti solo localhost (default) e il tunnel ngrok
+    allowedHosts: [".ngrok-free.app"],
     proxy: {
       "/api": {
         target: "http://backend:8000",

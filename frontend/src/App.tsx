@@ -55,13 +55,6 @@ export default function App() {
     });
   }, []);
 
-  useEffect(() => {
-    if (!isMobile) return;
-    if (selectedParking || selectedPOI) {
-      setMobileOverlayOpen(true);
-    }
-  }, [selectedParking, selectedPOI, isMobile]);
-
   const handleLocateMe = useCallback(() => {
     hapticMedium();
     if (!navigator.geolocation) {
@@ -94,7 +87,8 @@ export default function App() {
   const handleSelect = useCallback((parking: Parking | null) => {
     if (parking) hapticSelection();
     setSelectedParking(parking);
-  }, []);
+    if (parking && isMobile) setMobileOverlayOpen(true);
+  }, [isMobile]);
 
   const togglePOILayer = useCallback((category: POICategory) => {
     setPoiLayers((prev) => {
@@ -111,8 +105,11 @@ export default function App() {
 
   const handleSelectPOI = useCallback((poi: POI | null) => {
     setSelectedPOI(poi);
-    if (poi) setSelectedParking(null);
-  }, []);
+    if (poi) {
+      setSelectedParking(null);
+      if (isMobile) setMobileOverlayOpen(true);
+    }
+  }, [isMobile]);
 
   const handleMapClick = useCallback(() => {
     setSelectedPOI(null);

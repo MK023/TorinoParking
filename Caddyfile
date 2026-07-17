@@ -34,5 +34,9 @@ localhost {
 # Tunnel ngrok per test su iPhone: HTTP puro (ngrok termina lui l'HTTPS pubblico).
 # NGROK_DOMAIN arriva dal .env via docker-compose; default innocuo se assente.
 http://{$NGROK_DOMAIN:tunnel.disabled} {
+	# L'admin API non è mai raggiungibile dal tunnel pubblico
+	handle /api/v1/admin/* {
+		respond 403
+	}
 	import app
 }

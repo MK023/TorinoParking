@@ -13,14 +13,16 @@ Documento su sicurezza, threat modeling e linee guida.
 - CORS middleware configurato
 - SQLAlchemy ORM (prevenzione SQL injection)
 - Secrets in environment variables (`.env`, non nel codice)
+- HTTPS/TLS via Caddy reverse proxy (self-signed in dev, Let's Encrypt-ready in produzione)
+- Security headers middleware (HSTS, CSP, Referrer-Policy — `app/api/middleware.py`)
+- Security scanning automatico in CI (Bandit, pip-audit, GitLeaks, CodeQL)
+- Sentry error monitoring (`SENTRY_DSN` via env)
+- Admin API bloccata sul tunnel pubblico ngrok (403 da Caddy)
 
 ### Non ancora implementato (materiale di riferimento sotto)
-- HTTPS/TLS (nessun reverse proxy configurato, in development si usa HTTP)
 - Database encryption at rest
 - JWT authentication (non ci sono utenti, solo API key)
-- Security headers middleware (HSTS, CSP, etc.)
-- Security scanning automatico in CI (Bandit, Trivy, Safety, GitLeaks)
-- Prometheus/Sentry monitoring
+- Prometheus metrics
 - Audit log table
 - RBAC (role-based access control)
 
