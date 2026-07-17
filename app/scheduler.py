@@ -20,8 +20,7 @@ from app.config import settings
 from app.infrastructure.database import async_session_factory
 from app.infrastructure.db_models import ParkingDetailEntity, ParkingEntity, ParkingSnapshot
 from app.infrastructure.parser import ParkingXMLParser
-from app.infrastructure.redis_cache import PARKINGS_CACHE_KEY
-from app.infrastructure.serialization import serialize
+from app.infrastructure.redis_cache import PARKINGS_CACHE_KEY, RedisCache
 
 logger = structlog.get_logger()
 
@@ -70,12 +69,6 @@ async def fetch_parking_data(
             "source": "5T Torino Open Data + GTT",
             "parkings": [s.model_dump(mode="json") for s in schemas],
         }
-
-        serialized = serialize(
-            cache_data,
-            compress=settings.cache_compression,
-            threshold=settings.cache_compression_threshold,
-        )
 
         # Persist to DB FIRST, then write cache. Writing cache before commit
         # would leave Redis serving data that was never persisted in case of
@@ -130,8 +123,11 @@ async def fetch_parking_data(
             await session.execute(insert(ParkingSnapshot), snapshot_rows)
             await session.commit()
 
-        # DB transaction succeeded — safe to populate cache now.
-        await redis_pool.set(PARKINGS_CACHE_KEY, serialized, ex=settings.cache_ttl)
+        # DB transaction succeeded — safe to populate cache now. Data and
+        # ETag devono muoversi insieme (stessa pipeline): un ETag stantio
+        # farebbe rispondere 304 a contenuto che in realtà è cambiato.
+        cache = RedisCache(pool=redis_pool, default_ttl=settings.cache_ttl)
+        await cache.set_with_etag(PARKINGS_CACHE_KEY, cache_data)
 
         logger.info("fetch_parking_data_done", count=len(parkings))
     except Exception:
