@@ -64,6 +64,10 @@ async def test_filter_min_spots(client, _populate_cache):
     resp = await client.get("/api/v1/parkings?min_spots=10")
     assert resp.status_code == 200
     body = resp.json()
+    # Assert sul contenuto atteso, non solo sul loop (che con lista vuota
+    # passerebbe vacuamente): del mock solo "Libero" ha Free >= 10.
+    assert body["total"] == 1
+    assert [p["name"] for p in body["parkings"]] == ["Libero"]
     for p in body["parkings"]:
         assert p["free_spots"] is not None
         assert p["free_spots"] >= 10

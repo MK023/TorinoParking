@@ -21,6 +21,22 @@ async def test_create_api_key(client):
 
 
 @pytest.mark.asyncio
+async def test_admin_key_non_ascii_is_403_not_500(client):
+    """Regression: compare_digest su str esplode con input non-ASCII.
+
+    Un header X-Admin-Key non-ASCII (input attaccante-controllato) deve
+    produrre 403, non un TypeError → 500."""
+    resp = await client.post(
+        "/api/v1/admin/keys",
+        json={"name": "x"},
+        # bytes latin-1: httpx codifica gli header str in ASCII, ma un client
+        # ostile può mandare qualsiasi byte; Starlette li decodifica latin-1
+        headers={b"X-Admin-Key": "café-non-ascii".encode("latin-1")},
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_list_api_keys(client):
     # Create a key first
     await client.post(

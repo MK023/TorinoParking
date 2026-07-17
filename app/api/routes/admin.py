@@ -19,7 +19,11 @@ router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
 def _verify_admin(x_admin_key: str = Header(...)) -> None:
-    if not settings.admin_api_key or not hmac.compare_digest(x_admin_key, settings.admin_api_key):
+    # compare_digest su str richiede ASCII puro: un header non-ASCII
+    # (input controllato dall'attaccante) farebbe TypeError → 500.
+    if not settings.admin_api_key or not hmac.compare_digest(
+        x_admin_key.encode(), settings.admin_api_key.encode()
+    ):
         raise HTTPException(status_code=403, detail="Invalid admin key")
 
 
