@@ -65,8 +65,10 @@ services:
     environment:
       NGROK_DOMAIN: ${NGROK_DOMAIN:-tunnel.disabled}
     ports:
-      - "80:80"
-      - "443:443"
+      # Loopback: l'accesso remoto passa dal tunnel ngrok (che punta a
+      # localhost); senza bind chiunque sulla LAN raggiungerebbe Caddy
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
