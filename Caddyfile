@@ -6,6 +6,16 @@
 
 # Routing condiviso: API/docs -> backend, resto -> frontend
 (app) {
+	# Header di sicurezza per l'HTML del frontend (Vite non ne mette nessuno).
+	# Il prefisso "?" li applica solo se l'upstream non li ha già impostati:
+	# le risposte JSON del backend mantengono i propri (middleware.py).
+	header {
+		?Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.mapbox.com; connect-src 'self' https://api.mapbox.com https://api.open-meteo.com; font-src 'self'; frame-ancestors 'none'"
+		?X-Frame-Options "DENY"
+		?X-Content-Type-Options "nosniff"
+		?Referrer-Policy "strict-origin-when-cross-origin"
+		?Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
+	}
 	handle /api/* {
 		reverse_proxy backend:8000
 	}
