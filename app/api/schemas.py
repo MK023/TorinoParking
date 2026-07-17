@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.domain.models import Parking
 
@@ -35,6 +35,14 @@ class ParkingDetailSchema(BaseModel):
     payment_methods: list[str] = Field(default_factory=list)
     cameras: int | None = None
     notes: str = ""
+
+    @field_validator("bus_lines", "payment_methods", mode="before")
+    @classmethod
+    def _none_to_empty_list(cls, v: list[str] | None) -> list[str]:
+        # Le colonne DB sono nullable: il default_factory di Pydantic scatta
+        # solo se l'attributo manca, non se vale None — e un NULL farebbe
+        # fallire model_validate in scheduler e /nearby.
+        return v if v is not None else []
 
 
 class ParkingSchema(BaseModel):
