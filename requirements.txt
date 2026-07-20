@@ -6,7 +6,7 @@ sqlalchemy[asyncio]==2.0.50
 asyncpg==0.31.0
 alembic==1.18.4
 geoalchemy2==0.20.0
-redis==7.4.0
+redis==8.0.1
 hiredis==3.3.1
 APScheduler==3.11.2
 httpx==0.28.1
