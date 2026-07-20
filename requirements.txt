@@ -14,4 +14,4 @@ xmltodict==1.0.4
 defusedxml==0.7.1
 orjson==3.11.9
 sentry-sdk[fastapi]==2.60.0
-structlog==25.5.0
+structlog==26.1.0
