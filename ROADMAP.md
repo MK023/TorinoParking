@@ -343,6 +343,38 @@ Stato attuale e miglioramenti futuri per portare il backend a livello enterprise
 - [ ] Load testing con Locust: profilo di carico realistico
 - [ ] Documentazione API OpenAPI completa con esempi per ogni endpoint
 
+## Analisi funzionale (ottobre 2026)
+
+Task emersi dall'analisi funzionale di backend e app (requisiti, casi di test, registro dei problemi). Ordine proposto: prima quelli che bloccano la pubblicazione.
+
+### Sblocco della pubblicazione
+- [ ] Solo dati 5T: rimuovere i dettagli GTT (migrazione 003, tabella `parking_details`, merge nella cache, campo `detail`) finche' GTT non concede un'autorizzazione scritta al riuso; correggere `docs/GDPR.md`, che li chiama open data
+- [ ] Chiedere a GTT un'autorizzazione scritta al riuso dei dati delle schede parcheggi
+- [ ] Attribuzione IODL v2.0 completa nell'app: fonte 5T, Licenziante Citta' di Torino, link alla licenza
+- [ ] Nessun dato personale: togliere l'IP dal log di accesso dell'app e da quello di uvicorn (attivo di default), nessun IP nel limite di richieste, posizione mai inviata al server; poi allineare `docs/GDPR.md`
+- [ ] Limite senza dati personali: togliere il limite anonimo per IP (dietro il CGNAT degli operatori mobili pochi utenti bloccano gli altri); "vicino a me" calcolato sul telefono con `haversineMeters`; la rotta non chiama piu' 5T e a cache vuota risponde con l'ultimo campione salvato e la sua ora 5T (503 se non ce n'e'); tetto globale sulle richieste anonime con 503 e `Retry-After`, valore da tarare con una misura di capacita'. Rischio accettato: chi satura il tetto rallenta tutti
+- [ ] Ritirare `/nearby` e PostGIS dopo il punto precedente: l'app smette di chiamarla, poi via rotta e test, migrazione reversibile che toglie la colonna `location` e l'estensione, `postgres` al posto di `postgis/postgis` in compose, test e CI, via `geoalchemy2`
+
+### Dati corretti
+- [ ] Usare l'ora del dato 5T (`end_time` del feed) come `last_update` e nei campioni dello storico, non l'ora dello scaricamento
+- [ ] Con 5T giu' mostrare l'ultimo dato e, oltre 12 minuti dall'ora 5T, l'avviso "dati non aggiornati" al posto di "API error: 502" (misura del 16/10/2026: il dato 5T arriva con 3:50-8:00 minuti di eta')
+- [ ] Chiedere a 5T il significato dei valori di `status`, il verso di `tendence` e il significato di `Total=0`
+- [ ] Stati del parcheggio a tre regioni: disponibilita' (disponibile, quasi pieno fino al 10% dei posti, pieno, chiuso, posti liberi non rilevati, posti per non abbonati non presenti), freschezza del dato, tendenza
+
+### Abbonamenti (solo iOS)
+- [ ] Storico solo per gli abbonati, 403 agli altri: abbonamento con acquisto in-app Apple; l'app manda la transazione firmata e il server ne verifica firma, scadenza e revoca senza conservare nulla. Rischio accettato: la transazione puo' essere girata ad altri; mitigazione da verificare: accettare solo transazioni firmate di recente
+- [ ] Conservazione degli snapshot a 3 mesi per l'aggregazione per fasce orarie; `hours` dei campioni grezzi resta a 720
+- [ ] Correggere la voce `history?from=&to=` in "Endpoint dati avanzati": il codice accetta solo `hours`
+
+### Contratto API e documentazione
+- [ ] Completare il contratto OpenAPI: risposte d'errore (304, 403, 404, 503), chiave facoltativa, Security Scheme admin, header di risposta, `info`, descrizioni dei campi; decidere 401 o 403, 201 sulla POST, 404 sullo storico, esposizione di `/openapi.json`
+- [ ] Allineare la collection (Postman o Bruno) e il README a tutte le operazioni
+
+### Decisioni di sicurezza
+- [ ] Redis giu': decidere se il limite di richieste resta spento o la richiesta viene rifiutata, e documentarlo
+- [ ] Revoca delle chiavi: oggi una chiave revocata vale ancora fino a 60 s (cache in memoria); accettarlo e dichiararlo, o invalidare subito la cache
+- [ ] `environment` predefinito "development": se in produzione manca la variabile, i controlli sui segreti si saltano; renderla obbligatoria o cambiare il predefinito
+
 ---
 
 ## Note su costi
